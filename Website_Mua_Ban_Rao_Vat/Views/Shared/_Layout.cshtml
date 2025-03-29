@@ -1,0 +1,197 @@
+﻿@{
+    var username = Session["userName"]?.ToString();
+    var userAvatar = Session["userAvatar"]?.ToString();
+    var avatarPath = !string.IsNullOrEmpty(userAvatar) ? Url.Content("" + userAvatar) : Url.Content("~/Contents/image/user.png");
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title</title>
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.6/umd/popper.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script>
+         function openMessagesPopup() {
+        const width = window.innerWidth / 2; 
+        const height = window.innerHeight;  
+        const left = 0; 
+        const top = 0; 
+
+        window.open('@Url.Action("Messages", "Chat")', 'MessagesPopup',
+            `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=yes`);
+        return false;
+    }
+        function openCenteredPopup(url, title, w, h) {
+            const dualScreenLeft = window.screenLeft !== undefined ? window.screenLeft : screen.left;
+            const dualScreenTop = window.screenTop !== undefined ? window.screenTop : screen.top;
+
+            const width = window.innerWidth
+                ? window.innerWidth
+                : document.documentElement.clientWidth
+                    ? document.documentElement.clientWidth
+                    : screen.width;
+            const height = window.innerHeight
+                ? window.innerHeight
+                : document.documentElement.clientHeight
+                    ? document.documentElement.clientHeight
+                    : screen.height;
+
+            const left = ((width / 2) - (w / 2)) + dualScreenLeft;
+            const top = ((height / 2) - (h / 2)) + dualScreenTop;
+
+            const newWindow = window.open(url, title,
+                `scrollbars=yes, width=${w}, height=${h}, top=${top}, left=${left}, resizable=no`);
+
+            if (window.focus) {
+                newWindow.focus();
+            }
+            return false;
+        }
+    </script>
+
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-warning" href="@Url.Action("Index", "Home")">Duy Tốt</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+                    aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <div class="d-flex mx-auto w-75 align-items-center gap-2">
+
+                    <select class="form-select" id="sel1" name="sellist1">
+                        <option>TP Hồ Chí Minh</option>
+                        <option>Hà Nội</option>
+                        <option>Đà Nẵng</option>
+                        <option>Cần Thơ</option>
+                        <option>Hải Phòng</option>
+                    </select>
+                    <form class="d-flex flex-grow-1">
+                        <input class="form-control me-2" type="search" placeholder="Tìm kiếm sản phẩm..." aria-label="Search">
+                        <button class="btn btn-outline-success" type="submit">Tìm</button>
+                    </form>
+                </div>
+                <ul class="navbar-nav ms-auto">
+                    @if (Session["userId"] != null)
+                    {
+                        <div class="d-flex align-items-center">
+                            <a href="@Url.Action("Notifications", "Account")" class="btn position-relative p-0" style="width: 40px; height: 40px;">
+                                <i class="bi bi-bell" style="font-size: 1.4rem;"></i>
+                                <span class="position-absolute top-0 start-75 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+                                    3
+                                </span>
+                            </a>
+                            <a href="@Url.Action("Messages", "Chat")"
+                               class="btn position-relative p-0"
+                               onclick="return openMessagesPopup();"
+                               style="width: 40px; height: 40px;">
+                                <i class="bi bi-chat-dots" style="font-size: 1.4rem;"></i>
+                                <span class="position-absolute top-0 start-75 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
+                                    5
+                                </span>
+                            </a>
+
+                            <div class="dropdown">
+                                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <img src="@avatarPath" alt="Avatar" class="rounded-circle me-2" style="width: 30px; height: 30px; object-fit: cover;" />
+                                    <span class="fw-semibold">@username</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end shadow">
+                                    <li><a class="dropdown-item" href="@Url.Action("Profile", "User")">Trang cá nhân</a></li>
+                                    <li><a class="dropdown-item" href="@Url.Action("Favorite", "User")">Tin đã lưu</a></li>
+                                    <li><a class="dropdown-item" href="@Url.Action("Create", "Listing")">Đăng tin</a></li>
+                                    <li><a class="dropdown-item" href="@Url.Action("Settings", "Account")">Cài đặt</a></li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li><a class="dropdown-item text-danger" href="@Url.Action("Logout", "Account")">Đăng xuất</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    }
+
+
+                    else
+                    {
+                        <li class="nav-item">
+                            <a href="@Url.Action("Index", "Account")"
+                               class="nav-link"
+                               onclick="return openCenteredPopup(this.href, 'LoginPopup', 600, 700);">
+                                Đăng nhập
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("Register", "Account")"
+                               class="nav-link"
+                               onclick="return openCenteredPopup(this.href, 'LoginPopup', 600, 700);">
+                                Đăng ký
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div>
+        @RenderBody()
+        <footer class=" pt-4" style="background-color:navajowhite;">
+            <div class="container">
+                <div class="row">
+                    <!-- Cột 1: Trung tâm hỗ trợ -->
+                    <div class="col-md-3 mb-3">
+                        <h5>Trung tâm hỗ trợ</h5>
+                        <ul class="list-unstyled">
+                            <li><a href="#" class="text-dark text-decoration-none">Hướng dẫn mua hàng</a></li>
+                            <li><a href="#" class="text-dark text-decoration-none">Câu hỏi thường gặp</a></li>
+                            <li><a href="#" class="text-dark text-decoration-none">Liên hệ hỗ trợ</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Cột 2: Chính sách -->
+                    <div class="col-md-3 mb-3">
+                        <h5>Chính sách</h5>
+                        <ul class="list-unstyled">
+                            <li><a href="#" class="text-dark text-decoration-none">Chính sách bảo mật</a></li>
+                            <li><a href="#" class="text-dark text-decoration-none">Chính sách đổi trả</a></li>
+                            <li><a href="#" class="text-dark text-decoration-none">Điều khoản sử dụng</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Cột 3: Về chúng tôi -->
+                    <div class="col-md-3 mb-3">
+                        <h5>Về chúng tôi</h5>
+                        <ul class="list-unstyled">
+                            <li><a href="#" class="text-dark text-decoration-none">Giới thiệu</a></li>
+                            <li><a href="#" class="text-dark text-decoration-none">Tuyển dụng</a></li>
+                            <li><a href="#" class="text-dark text-decoration-none">Tin tức</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Cột 4: Nhà phát triển -->
+                    <div class="col-md-3 mb-3 text-center">
+                        <h5>Phát triển bởi</h5>
+                        <img src="~/Contents/image/user/Duy_Dev.jpg" class="rounded-circle mb-2" alt="Avatar" style="width: 80px; height: 80px; object-fit: cover;">
+                        <p class="mb-0">Nguyễn Nhựt Duy</p>
+                        <a href="https://fb.com/NhutDuyOt"><i class="bi bi-facebook"></i></a>
+                    </div>
+                </div>
+
+                <hr class="border-light">
+                <p class="text-center mb-0 pb-3">&copy; 2025 - Tất cả bản quyền thuộc về Nguyễn Nhựt Duy</p>
+            </div>
+        </footer>
+
+    </div>
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+    @RenderSection("scripts", required: false)
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</body>
+</html>
