@@ -14,9 +14,9 @@ namespace Website_Mua_Ban_Rao_Vat.Controllers
         public CloudinaryService()
         {
             Account account = new Account(
-                "dgpw5aart",     // Cloud name
-                "613462792535466",        // API key
-                "iYTtVAxtts6GBXvuGIpZHEh8wmQ"      // API secret
+                "dgpw5aart",
+                "613462792535466",
+                "iYTtVAxtts6GBXvuGIpZHEh8wmQ"
             );
             cloudinary = new Cloudinary(account);
         }

@@ -48,6 +48,10 @@ namespace Website_Mua_Ban_Rao_Vat.Controllers
                     return Json(new { success = false, message = "Mật khẩu không đúng." });
                 }
 
+                if(user.Role == 2)
+                {
+                    return Json(new { success = false, message = "Tài khoản đang bị khóa để giải quyết khiếu nại. Vui lòng liên hệ nguyennhutduyư.cv@gmail.com!" });
+                }
                 user.Online = true;
                 Entity.SaveChanges();
                 Session["userId"] = user.Id;
@@ -125,9 +129,12 @@ namespace Website_Mua_Ban_Rao_Vat.Controllers
                 user.CreatedAt = DateTime.Now;
                 Entity.Users.Add(user);
                 Entity.SaveChanges();
-                TempData["Notification"] = "Đăng ký thành công!";
-                TempData["NotificationType"] = "success";
-                return RedirectToAction("Index", "Account");
+                return Json(new
+                {
+                    success = true,
+                    message = "Đăng ký thành công!",
+                    redirectUrl = Url.Action("Index", "Account")
+                });
             }
             catch (Exception ex)
             {

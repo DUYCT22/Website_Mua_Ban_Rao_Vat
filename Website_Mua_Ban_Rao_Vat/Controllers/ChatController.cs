@@ -38,7 +38,6 @@ namespace Website_Mua_Ban_Rao_Vat.Controllers
             try
             {
                 int currentUserId = (int)Session["userId"];
-
                 var messages = Entity.Messages
                     .Include(m => m.Listing.Images) 
                     .Where(m => (m.SenderId == currentUserId && m.ReceiverId == userId) ||

@@ -14,7 +14,11 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
-            background-color: #f2f2f2;
+            background-color: moccasin;
+        }
+
+        input.form-control {
+            padding-right: 2.5rem;
         }
 
         .avatar-preview {
@@ -26,37 +30,63 @@
         }
     </style>
     <script>
-        $(document).ready(function () {
-            $("form").on("submit", function () {
-                $("#submitBtn").prop("disabled", true).html('<span class="spinner-border spinner-border-sm"></span>');
-                $("#spinner").fadeIn();
-                return true;
+    $(document).ready(function () {
+        $("#registerForm").on("submit", function (e) {
+            e.preventDefault(); // Ngăn form reload
+            const form = $(this)[0];
+            const formData = new FormData(form);
+
+            $("#submitBtn").prop("disabled", true).html('<span class="spinner-border spinner-border-sm"></span>');
+            $("#spinner").fadeIn();
+
+            $.ajax({
+                url: '@Url.Action("Register", "Account")',
+                method: "POST",
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function (res) {
+                    if (res.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            text: res.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.href = res.redirectUrl || "/";
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            text: res.message
+                        });
+                    }
+                },
+                error: function () {
+                    Swal.fire({
+                        icon: 'error',
+                        text: 'Đăng ký thất bại. Vui lòng thử lại.'
+                    });
+                },
+                complete: function () {
+                    $("#submitBtn").prop("disabled", false).html('Đăng ký');
+                    $("#spinner").fadeOut();
+                }
             });
         });
-    document.addEventListener("DOMContentLoaded", function () {
-        var notification = "@Html.Raw(TempData["Notification"])";
-        var notificationType = "@Html.Raw(TempData["NotificationType"])";
-
-        if (notification && notificationType) {
-            Swal.fire({
-                position: "top-center",
-                text: notification,
-                icon: notificationType,
-                showConfirmButton: false,
-                timer: 2500
-            });
-        }
     });
     </script>
+
 </head>
 <body>
     <div class="container py-5">
+        <img class="img-fluid" src="~/Contents/image/Logo.png" />
         <h2 class="text-center mb-4">Đăng ký</h2>
 
         <div class="row justify-content-center">
             <div class="col-md-6">
                 <div class="card shadow p-4">
-                    @using (Html.BeginForm("Register", "Account", FormMethod.Post, new { enctype = "multipart/form-data" }))
+                    @using (Html.BeginForm("", "", FormMethod.Post, new { id = "registerForm", enctype = "multipart/form-data" }))
                     {
                         <div class="mb-3">
                             <label for="FullName" class="form-label">Họ và Tên</label>
@@ -110,7 +140,6 @@
         </div>
         <div id="spinner" style="display:none; text-align:center; margin-top:20px;">
             <div class="spinner-border text-primary" role="status">
-                <span class="sr-only">Đang xử lý...</span>
             </div>
             <p>Đang xử lý, vui lòng đợi...</p>
         </div>

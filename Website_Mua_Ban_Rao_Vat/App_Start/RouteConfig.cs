@@ -33,11 +33,10 @@ namespace Website_Mua_Ban_Rao_Vat
                defaults: new { controller = "Account", action = "Register" }
            );
             routes.MapRoute(
-               name: "FriendlyDetail",
-               url: "bai-dang/{slug}-{id}",
-               defaults: new { controller = "Listing", action = "Detail" },
-               constraints: new { id = @"\d+" }
-           );
+                name: "FriendlyDetail",
+                url: "bai-dang/{slug}-{encryptedId}",
+                defaults: new { controller = "Listing", action = "Detail" }
+            );
             routes.MapRoute(
               name: "FriendlyCreateListing",
               url: "Dang-tin",
@@ -59,11 +58,16 @@ namespace Website_Mua_Ban_Rao_Vat
                defaults: new { controller = "User", action = "Favorite" }
            );
             routes.MapRoute(
+               name: "FriendlyLiByCate",
+               url: "danh-muc/{slug}-{encryptedId}",
+               defaults: new { controller = "Listing", action = "LiByCate" }
+           );
+            routes.MapRoute(
                 name: "Default",
                 url: "{controller}/{action}/{id}",
                 defaults: new { controller = "Home", action = "Index", id = UrlParameter.Optional }
             );
-           
+
         }
     }
 }

@@ -229,6 +229,7 @@
       <DependentUpon>Mua__Ban__Rao_Vat.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\HomeModel.cs" />
+    <Compile Include="Models\IdProtector.cs" />
     <Compile Include="Models\Image.cs">
       <DependentUpon>Mua__Ban__Rao_Vat.tt</DependentUpon>
     </Compile>
@@ -281,15 +282,23 @@
     <Content Include="Contents\image\banner\banner_2.jpg" />
     <Content Include="Contents\image\banner\banner_3.jpg" />
     <Content Include="Contents\image\category\ban_phim.jpg" />
+    <Content Include="Contents\image\category\can_ho.jpg" />
     <Content Include="Contents\image\category\dien_thoai.jpg" />
     <Content Include="Contents\image\category\giay.jpg" />
+    <Content Include="Contents\image\category\laptop.jpg" />
     <Content Include="Contents\image\category\may_tinh.jpg" />
     <Content Include="Contents\image\category\nha_dat.jpg" />
     <Content Include="Contents\image\category\noi_that.jpg" />
+    <Content Include="Contents\image\category\phong_bep.jpg" />
+    <Content Include="Contents\image\category\phong_khach.jpg" />
     <Content Include="Contents\image\category\quan_ao.jpg" />
     <Content Include="Contents\image\category\thu_cung.jpg" />
     <Content Include="Contents\image\category\xe_co.jpg" />
+    <Content Include="Contents\image\category\xe_may.jpg" />
+    <Content Include="Contents\image\category\xe_oto.jpg" />
+    <Content Include="Contents\image\Logo.png" />
     <Content Include="Contents\image\no_image.png" />
+    <Content Include="Contents\image\Tin_Tot_span.png" />
     <Content Include="Contents\image\user\Duy_Dev.jpg" />
     <Content Include="Contents\image\user\user.png" />
     <Content Include="Content\bootstrap-grid.css" />
@@ -308,7 +317,6 @@
     <Content Include="Content\bootstrap.min.css" />
     <Content Include="Content\bootstrap.rtl.css" />
     <Content Include="Content\bootstrap.rtl.min.css" />
-    <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
     <Content Include="Models\Mua__Ban__Rao_Vat.Context.tt">
@@ -345,6 +353,7 @@
     <Content Include="Scripts\jquery.validate.unobtrusive.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
     <Content Include="Scripts\modernizr-2.8.3.js" />
+    <Content Include="favicon.ico" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
@@ -366,12 +375,11 @@
     <Content Include="Views\Chat\Messages.cshtml" />
     <Content Include="Views\User\Profile.cshtml" />
     <Content Include="Views\User\Favorite.cshtml" />
+    <Content Include="Views\Listing\LiByCate.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
     <Folder Include="Contents\css\Home\" />
-    <Folder Include="Contents\image\listing\" />
-    <Folder Include="Views\FileManager\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\bootstrap.rtl.min.css.map" />

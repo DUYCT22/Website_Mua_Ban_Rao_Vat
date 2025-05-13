@@ -80,7 +80,7 @@
             });
     }
     function sendMessage(receiverId, listingId) {
-        const content = "id bài đăng: " + listingId;
+        const content = "Tôi muốn có thêm thông tin";
         $.ajax({
             type: "POST",
             url: '@Url.Action("SendMessage", "Chat")',

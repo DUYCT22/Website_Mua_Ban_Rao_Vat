@@ -18,13 +18,63 @@
 
     <style>
         body {
-            background-color: #f2f2f2;
+            background-color:moccasin;
+        }
+        input.form-control {
+            padding-right: 2.5rem;
         }
     </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var form = document.querySelector('form');
 
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+
+                var formData = new FormData(form);
+
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                position: "top-end",
+                                text: data.message,
+                                icon: "success",
+                                showConfirmButton: false,
+                                timer: 1500
+                            }).then(() => {
+                                window.opener.location.href = data.redirectUrl;
+                                window.close();
+                            });
+                        } else {
+                            Swal.fire({
+                                position: "top-end",
+                                text: data.message,
+                                icon: "error",
+                                showConfirmButton: true
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            position: "top-end",
+                            text: "Có lỗi xảy ra. Vui lòng thử lại sau.",
+                            icon: "error",
+                            showConfirmButton: true
+                        });
+                    });
+            });
+        });
+    </script>
 </head>
 <body>
     <div class="container py-5">
+        <img class="img-fluid" src="~/Contents/image/Logo.png" />
         <h2 class="text-center mb-4">Đăng nhập</h2>
 
         <div class="row justify-content-center">
@@ -33,13 +83,19 @@
                     @using (Html.BeginForm("Index", "Account", FormMethod.Post))
                     {
                         <div class="form-group mb-3">
-                            @Html.LabelFor(m => m.LoginName, new { @class = "form-label" })
-                            @Html.TextBoxFor(m => m.LoginName, new { @class = "form-control", placeholder = "Tên đăng nhập" })
+                            <h6>Tên đăng nhập</h6>
+                            @Html.TextBoxFor(m => m.LoginName, new { @class = "form-control", placeholder = "vd: duyot" })
                         </div>
 
                         <div class="form-group mb-3">
-                            @Html.LabelFor(m => m.Password, new { @class = "form-label" })
-                            @Html.PasswordFor(m => m.Password, new { @class = "form-control", placeholder = "Mật khẩu" })
+                            <h6>Mật khẩu</h6>
+                            <div class="position-relative">
+                                @Html.PasswordFor(m => m.Password, new { @class = "form-control pe-5", id = "passwordInput", placeholder = "Nhập mật khẩu" })
+                                <span class="position-absolute top-50 end-0 translate-middle-y me-3" style="cursor:pointer;" id="togglePassword">
+                                    <i class="fa fa-eye" id="toggleIcon"></i>
+                                </span>
+                            </div>
+
                         </div>
 
                         <button type="submit" class="btn btn-primary w-100">Đăng nhập</button>
@@ -61,52 +117,21 @@
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const toggle = document.getElementById('togglePassword');
+            const input = document.getElementById('passwordInput');
+            const icon = document.getElementById('toggleIcon');
+
+            toggle.addEventListener('click', function () {
+                const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                input.setAttribute('type', type);
+                icon.classList.toggle('fa-eye');
+                icon.classList.toggle('fa-eye-slash');
+            });
+        });
+    </script>
+
+
 </body>
 </html>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        var form = document.querySelector('form');
-
-        form.addEventListener('submit', function (event) {
-            event.preventDefault();
-
-            var formData = new FormData(form);
-
-            fetch(form.action, {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        Swal.fire({
-                            position: "top-end",
-                            text: data.message,
-                            icon: "success",
-                            showConfirmButton: false,
-                            timer: 1500
-                        }).then(() => {
-                            window.opener.location.href = data.redirectUrl;
-                            window.close(); 
-                        });
-                    } else {
-                        Swal.fire({
-                            position: "top-end",
-                            text: data.message,
-                            icon: "error",
-                            showConfirmButton: true
-                        });
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    Swal.fire({
-                        position: "top-end",
-                        text: "Có lỗi xảy ra. Vui lòng thử lại sau.",
-                        icon: "error",
-                        showConfirmButton: true
-                    });
-                });
-        });
-    });
-</script>

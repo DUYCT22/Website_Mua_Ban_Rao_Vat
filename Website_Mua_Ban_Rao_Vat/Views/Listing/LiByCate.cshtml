@@ -1,0 +1,164 @@
+﻿@model Website_Mua_Ban_Rao_Vat.Models.HomeModel
+@using Website_Mua_Ban_Rao_Vat.Models
+@{
+    ViewBag.Title = "Bài Đăng Theo Danh Mục";
+}
+@functions {
+    public string ToSlug(string str)
+    {
+        return str.ToLower()
+                  .Replace(" ", "-")
+                  .Replace("/", "")
+                  .Replace("(", "")
+                  .Replace(")", "")
+                  .Replace("+", "")
+                  .Replace(".", "")
+                  .Replace(",", "")
+                  .Replace("?", "")
+                  .Replace("!", "")
+                  .Replace(":", "")
+                  .Replace(";", "")
+                  .Replace("đ", "d")
+                  .Normalize(System.Text.NormalizationForm.FormD)
+                  .Where(c => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
+                  .Aggregate("", (s, c) => s + c)
+                  .Replace("--", "-");
+    }
+}
+<script>
+    function openFullscreen(event, url) {
+        event.preventDefault();
+        const win = window.open(url, '_blank');
+
+        if (win) {
+            win.focus();
+            win.onload = () => {
+                const docElm = win.document.documentElement;
+                if (docElm.requestFullscreen) {
+                    docElm.requestFullscreen().catch(err => {
+                        console.error("Error attempting to enable full-screen mode:", err);
+                    });
+                } else if (docElm.mozRequestFullScreen) {
+                    docElm.mozRequestFullScreen();
+                } else if (docElm.webkitRequestFullscreen) {
+                    docElm.webkitRequestFullscreen();
+                } else if (docElm.msRequestFullscreen) {
+                    docElm.msRequestFullscreen();
+                }
+            };
+        } else {
+            alert("Trình duyệt đã chặn popup. Vui lòng cho phép để xem ở chế độ toàn màn hình.");
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        var myCarousel = document.querySelector('#demo');
+        var carousel = new bootstrap.Carousel(myCarousel, {
+            interval: 3000,
+            ride: 'carousel'
+        });
+    });
+</script>
+
+<main class="container mt-4" style="margin-bottom:325px">
+    @if (Model.Listing.Count != 0)
+    {
+        if (Model.Categories.Count == 0) { }
+        else
+        {
+            <div class="row text-center mb-5">
+                <h3 class="fw-bold mb-4">Danh mục</h3>
+                @foreach (var item in Model.Categories)
+                {
+
+                    <a class="col-6 col-md-2 mb-3"
+                       href="@Url.RouteUrl("FriendlyLiByCate", new { slug = ToSlug(item.Name), encryptedId = IdProtector.EncryptId(item.Id) })"
+                       target="_blank"
+                       style="text-decoration:none; height:fit-content"
+                       onclick="openFullscreen(event, this.href)">
+                        <img src="~/Contents/image/category/@item.Image"
+                             class="img-fluid mb-2"
+                             style="width: 100px; height: 100px; object-fit:fill; border-radius: 10px;"
+                             alt="@item.Name" />
+
+                        <p>@item.Name</p>
+                    </a>
+                }
+            </div>
+        }
+        <div class="row">
+            <h3 class="fw-bold mb-4 text-center">Bài đăng mới nhất</h3>
+            @foreach (var post in Model.Listing)
+            {
+                <div class="col-12 col-md-2 mb-2">
+                    <a class="card shadow-sm"
+                       href="@Url.RouteUrl("FriendlyDetail", new { slug = ToSlug(post.Title), encryptedId = IdProtector.EncryptId(post.Id) })"
+                       target="_blank"
+                       style="text-decoration:none; height:fit-content"
+                       onclick="openFullscreen(event, this.href)">
+                        @{
+                            var firstImage = post.Images?.FirstOrDefault()?.ImageURL;
+                        }
+
+                        <div class="position-relative">
+                            @if (!string.IsNullOrEmpty(firstImage))
+                            {
+                                <img src="@firstImage" style="max-height: 170px;" class="card-img-top" alt="Hình ảnh">
+                            }
+                            else
+                            {
+                                <img src="@Url.Content("~/Contents/image/no_image.png")" style="max-height: 170px;" class="card-img-top" alt="Không có ảnh">
+                            }
+
+                            <img src="~/Contents/image/Tin_Tot_span.png"
+                                 class="position-absolute"
+                                 style="bottom: 0.1px; right: 0.1px; width: 80px; height: 30px"
+                                 alt="icon nhỏ">
+                        </div>
+
+
+                        <div class="card-body ">
+                            <h6 class="card-title">
+                                @(post.Title?.Length > 18 ? post.Title.Substring(0, 18) + "..." : post.Title)
+                            </h6>
+                            <p class="card-text" style="color:red">@String.Format("{0:N0} đ", post.Price)</p>
+                            @{
+                                decimal rawAvg = Model.UserRatingAvg.ContainsKey(post.User.Id) ? Model.UserRatingAvg[post.User.Id] : 0;
+                                double avgStar = (double)rawAvg;
+                                int fullStars = (int)Math.Floor(avgStar);
+                                bool hasHalfStar = (avgStar - fullStars) >= 0.5;
+                                int emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+                            }
+                            <div class="row ">
+                                <div class="col-3">
+                                    <img class="rounded-circle" src="@Url.Content(post.User.Avatar)" alt="Hình ảnh" style="width:40px; height:45px">
+                                </div>
+                                <div class="col-9">
+                                    <div>
+                                        @for (int i = 0; i < fullStars; i++)
+                                        {
+                                            <i class="fa-solid fa-star" style="color: #FFD43B;"></i>
+                                        }
+                                        @if (hasHalfStar)
+                                        {
+                                            <i class="fa-solid fa-star-half-stroke" style="color: #FFD43B;"></i>
+                                        }
+                                        @for (int i = 0; i < emptyStars; i++)
+                                        {
+                                            <i class="fa-regular fa-star" style="color: #FFD43B;"></i>
+                                        }
+                                    </div>
+                                    <p>@(post.CreatedAt.HasValue ? post.CreatedAt.Value.ToString("dd/MM/yyyy") : "")</p>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <h3 class="fw-bold mb-4 text-center">Chưa có bài đăng theo danh mục này</h3>
+    }
+</main>

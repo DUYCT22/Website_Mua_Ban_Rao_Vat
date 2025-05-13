@@ -26,6 +26,12 @@ namespace Website_Mua_Ban_Rao_Vat.Controllers
                     .OrderByDescending(n => n.CreatedAt)
                     .Take(10)
                     .ToList();
+                    Session["Chat"] = Entity.Messages
+                        .Where(m => m.ReceiverId == id || m.SenderId == id)
+                        .Select(m => new{
+                            User1 = m.SenderId < m.ReceiverId ? m.SenderId : m.ReceiverId,
+                            User2 = m.SenderId < m.ReceiverId ? m.ReceiverId : m.SenderId
+                        }).Distinct().Count();
                 }
                 else
                 {
