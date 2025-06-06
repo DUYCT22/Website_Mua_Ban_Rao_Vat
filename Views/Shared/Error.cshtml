@@ -1,0 +1,21 @@
+﻿﻿@{
+    ViewBag.Title = "Lỗi";
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <title>Lỗi</title>
+</head>
+<body>
+    <h2>Đã xảy ra lỗi</h2>
+    <p>
+        Xin lỗi vì sự bất tiện này. Vui lòng thử lại sau hoặc liên hệ với bộ phận hỗ trợ.
+    </p>
+    @if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
+    {
+        <p><strong>Chi tiết:</strong> @ViewBag.ErrorMessage</p>
+    }
+</body>
+</html>

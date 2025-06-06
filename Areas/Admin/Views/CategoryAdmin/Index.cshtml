@@ -1,0 +1,348 @@
+﻿@model PagedList.IPagedList<Website_Mua_Ban_Rao_Vat.Models.Category>
+@using PagedList.Mvc;
+
+@{
+    ViewBag.Title = "Quản lý danh mục";
+}
+<style>
+    img.image-show:hover {
+        transform: scale(1.05);
+    }
+
+    .modal-img {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        padding-top: 60px;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.8);
+    }
+
+    .modal-img-content {
+        margin: auto;
+        display: block;
+        max-width: 90%;
+        max-height: 90%;
+    }
+
+    .modal-img-close {
+        position: absolute;
+        top: 20px;
+        right: 35px;
+        color: #fff;
+        font-size: 40px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .pagination li a {
+        class: page-link;
+        display: block;
+        padding: 0.5rem 0.75rem;
+        color: #007bff;
+        text-decoration: none;
+        background-color: #fff;
+        border: 1px solid #dee2e6;
+        margin-left: -1px;
+    }
+
+    .pagination li.active a {
+        z-index: 1;
+        color: #fff;
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+    .pagination li.disabled a {
+        color: #6c757d;
+        pointer-events: none;
+        background-color: #fff;
+        border-color: #dee2e6;
+    }
+</style>
+<h2 class="mb-4">📂 Quản lý danh mục</h2>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">➕ Thêm danh mục</div>
+    <div class="card-body">
+        @using (Html.BeginForm("Create", "CategoryAdmin", FormMethod.Post, new { enctype = "multipart/form-data", id = "createCategoryForm" }))
+        {
+            <div class="mb-3">
+                <label class="form-label">📁 Danh mục cha (tuỳ chọn)</label>
+                <select name="ParentId" class="form-select">
+                    <option value="">-- Không chọn (tạo danh mục cha mới) --</option>
+                    @foreach (var category in ViewBag.Categories as List<Website_Mua_Ban_Rao_Vat.Models.Category>)
+                    {
+                        <option value="@category.Id">@category.Name</option>
+                    }
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">📝 Tên danh mục</label>
+                <input type="text" name="Name" class="form-control" required maxlength="255" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">🖼 Hình ảnh</label>
+                <input type="file" name="ImageFile" class="form-control" accept="image/*" onchange="previewCreateImage(event)" required />
+                <img id="preview" class="mt-3 rounded shadow-sm image-show" style="max-height: 200px; display: none; cursor: pointer;" onclick="showModal(this.src)" />
+            </div>
+
+            <button type="submit" class="btn btn-success" id="addCategoryBtn">
+                ➕ Thêm danh mục
+            </button>
+        }
+    </div>
+
+</div>
+
+<div class="card shadow-sm">
+    <div class="m-3 px-3">
+        @using (Html.BeginForm("Index", "CategoryAdmin", FormMethod.Get))
+        {
+            <div class="row g-2 align-items-center mb-3">
+                <div class="col-md-4">
+                    <input type="text" name="searchString" value="@ViewBag.CurrentFilter" class="form-control" placeholder="🔍 Tìm danh mục theo tên..." />
+                </div>
+                <div class="col-md-3">
+                    <select name="parentId" class="form-select">
+                        <option value="">Tất cả danh mục cha </option>
+                        @foreach (var cat in ViewBag.Categories as List<Website_Mua_Ban_Rao_Vat.Models.Category>)
+                        {
+                            <option value="@cat.Id" @(ViewBag.CurrentParentId != null && ViewBag.CurrentParentId == cat.Id ? "selected" : "")>@cat.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="sort" class="form-select">
+                        <option value="asc" @(Request["sort"] == "asc" ? "selected" : "")>Cũ nhất</option>
+                        <option value="desc" @(Request["sort"] == "desc" ? "selected" : "")>Mới nhất</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-outline-primary w-100">Tìm kiếm/Lọc</button>
+                </div>
+            </div>
+        }
+
+    </div>
+    <div class="card-header bg-dark text-white">📋 Danh sách danh mục</div>
+    <div class="card-body">
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="table-secondary">
+                <tr>
+                    <th>Hình ảnh</th>
+                    <th>Tiêu đề</th>
+                    <th>Danh mục cha</th>
+                    <th>Tạo lúc</th>
+                    <th>Tạo bởi</th>
+                    <th>Sửa lúc</th>
+                    <th>Sửa bởi</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td><img src="@Url.Content(item.Image)" style="height:80px; cursor:pointer" class="rounded shadow-sm image-show" onclick="showModal(this.src)" /></td>
+                        <td>@item.Name</td>
+                        <td>@(item.Category1 != null ? item.Category1.Name : "Không có")</td>
+                        <td>@(item.CreatedAt.HasValue ? item.CreatedAt.Value.ToString("dd/MM/yyyy HH:mm") : "Không")</td>
+                        <td>@item.User.FullName</td>
+                        <td>@(item.UpdatedAt.HasValue ? item.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm") : "Không")</td>
+                        <td>@(item.UpdatedBy.HasValue ? item.User1.FullName : "Không" )</td>
+                        <td>
+                            <button type="button" class="btn btn-info" onclick="openEditModal('@item.Id', '@item.Name', '@item.ParentId', '@Url.Content(item.Image)')">
+                                <i class="bi bi-pencil-square"></i> Sửa
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div class="d-flex justify-content-center mt-4">
+            @Html.PagedListPager(Model, page => Url.Action("Index", new { page, searchString = ViewBag.CurrentFilter }), new PagedListRenderOptions
+            {
+     MaximumPageNumbersToDisplay = 5,
+     UlElementClasses = new[] { "pagination", "pagination-lg", "justify-content-center" },
+     LiElementClasses = new[] { "page-item" },
+     DisplayLinkToFirstPage = PagedListDisplayMode.Always,
+     DisplayLinkToLastPage = PagedListDisplayMode.Always,
+     DisplayLinkToPreviousPage = PagedListDisplayMode.Always,
+     DisplayLinkToNextPage = PagedListDisplayMode.Always,
+     DisplayLinkToIndividualPages = true,
+     LinkToPreviousPageFormat = "«",
+     LinkToNextPageFormat = "»",
+     LinkToFirstPageFormat = "««",
+     LinkToLastPageFormat = "»»"
+ })
+
+
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editForm" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editCategoryModalLabel">📝 Sửa Danh Mục</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editId" name="Id" />
+                    <div class="mb-3">
+                        <label class="form-label">✍️ Tên</label>
+                        <input type="text" name="Name" id="editName" class="form-control" required />
+                    </div>
+                    <div class="mb-3" id="parentSelectGroup">
+                        <label class="form-label">🔗 Danh mục cha</label>
+                        <select name="ParentId" id="editParentId" class="form-select">
+                            <option value="">-- Không chọn --</option>
+                            @foreach (var category in ViewBag.Categories as List<Website_Mua_Ban_Rao_Vat.Models.Category>)
+                            {
+                                <option value="@category.Id">@category.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">🖼 Hình ảnh mới (nếu muốn thay)</label>
+                        <input type="file" name="ImageFile" class="form-control" accept="image/*" onchange="previewEditImage(event)" />
+                        <img id="editPreview" class="mt-3 rounded shadow-sm image-show" style="max-height: 200px; cursor:pointer" onclick="showModal(this.src)" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary" id="saveButton">💾 Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div id="imgModal" class="modal-img" onclick="hideModal()">
+    <span class="modal-img-close" onclick="hideModal()">&times;</span>
+    <img class="modal-img-content" id="modalImage" />
+</div>
+
+@section scripts {
+    <script>
+        function showModal(src) {
+            Swal.fire({
+                imageUrl: src,
+                imageAlt: "Ảnh phóng to",
+                showConfirmButton: false,
+                showCloseButton: true
+            });
+        }
+        function previewCreateImage(event) {
+            var reader = new FileReader();
+            reader.onload = function () {
+                var output = document.getElementById("preview");
+                output.src = reader.result;
+                output.style.display = "block";
+            };
+            if (event.target.files[0]) {
+                reader.readAsDataURL(event.target.files[0]);
+            }
+        }
+
+        function previewEditImage(event) {
+            var reader = new FileReader();
+            reader.onload = function () {
+                var output = document.getElementById("editPreview");
+                output.src = reader.result;
+                output.style.display = "block";
+            };
+            if (event.target.files[0]) {
+                reader.readAsDataURL(event.target.files[0]);
+            }
+        }
+
+        document.getElementById("createCategoryForm").addEventListener("submit", function () {
+            const btn = document.getElementById("addCategoryBtn");
+            btn.disabled = true;
+            btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
+        });
+
+        function openEditModal(id, name, parentId, imageUrl) {
+            document.getElementById('editId').value = id;
+            document.getElementById('editName').value = name;
+
+            const parentGroup = document.getElementById('parentSelectGroup');
+            const parentSelect = document.getElementById('editParentId');
+
+            if (parentId && parentId !== "0" && parentId !== "") {
+                parentGroup.style.display = 'block';
+                parentSelect.value = parentId;
+            } else {
+                parentGroup.style.display = 'none';
+                parentSelect.value = '';
+            }
+
+            document.getElementById('editPreview').src = imageUrl;
+            document.getElementById('editPreview').style.display = 'block';
+
+            var modal = new bootstrap.Modal(document.getElementById('editCategoryModal'));
+            modal.show();
+        }
+
+             document.getElementById("editForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const form = e.target;
+    const formData = new FormData(form);
+         const saveButton = document.getElementById("saveButton");
+         saveButton.disabled = true;
+         const originalText = saveButton.innerHTML;
+         saveButton.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
+
+    fetch('@Url.Action("Edit", "CategoryAdmin")', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'RequestVerificationToken': form.querySelector('input[name="__RequestVerificationToken"]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Thành công!',
+                text: data.message,
+                confirmButtonText: 'OK'
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: data.message
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Lỗi:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Lỗi kết nối',
+            text: 'Không thể gửi dữ liệu đến server.'
+        });
+    }).finally(() => {
+        saveButton.disabled = false;
+        saveButton.innerHTML = originalText;
+    });
+});
+
+
+    </script>
+}
+

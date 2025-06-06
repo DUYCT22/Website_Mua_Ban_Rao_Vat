@@ -1,0 +1,504 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Schema Namespace="Mua_Ban_Vao_VatModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+  <EntityType Name="Banner">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="Link" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+    <Property Name="Image" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+    <Property Name="Status" Type="Boolean" />
+    <Property Name="Orders" Type="Int32" />
+  </EntityType>
+  <EntityType Name="Category">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="Name" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+    <Property Name="ParentId" Type="Int32" />
+    <NavigationProperty Name="Categories1" Relationship="Self.FK__Categorie__Paren__3D5E1FD2" FromRole="Categories" ToRole="Categories1" />
+    <NavigationProperty Name="Category1" Relationship="Self.FK__Categorie__Paren__3D5E1FD2" FromRole="Categories1" ToRole="Categories" />
+    <NavigationProperty Name="Legals" Relationship="Self.FK__Legal__CategoryI__5441852A" FromRole="Categories" ToRole="Legal" />
+    <NavigationProperty Name="Listings" Relationship="Self.FK__Listings__Catego__412EB0B6" FromRole="Categories" ToRole="Listings" />
+    <Property Name="Image" Type="String" MaxLength="255" FixedLength="false" Unicode="true" Nullable="false" />
+  </EntityType>
+  <EntityType Name="Favorite">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="UserId" Type="Int32" />
+    <Property Name="ListingId" Type="Int32" />
+    <Property Name="CreatedAt" Type="DateTime" Precision="3" />
+    <NavigationProperty Name="Listing" Relationship="Self.FK__Favorites__Listi__4E88ABD4" FromRole="Favorites" ToRole="Listings" />
+    <NavigationProperty Name="User" Relationship="Self.FK__Favorites__UserI__4D94879B" FromRole="Favorites" ToRole="Users" />
+  </EntityType>
+  <EntityType Name="Follow">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="FollowerId" Type="Int32" />
+    <Property Name="SellerId" Type="Int32" />
+    <Property Name="CreatedAt" Type="DateTime" Precision="3" />
+    <NavigationProperty Name="User" Relationship="Self.FK__Follows__Followe__5BE2A6F2" FromRole="Follows" ToRole="Users" />
+    <NavigationProperty Name="User1" Relationship="Self.FK__Follows__SellerI__5CD6CB2B" FromRole="Follows" ToRole="Users" />
+  </EntityType>
+  <EntityType Name="Image">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="ListingId" Type="Int32" />
+    <Property Name="ImageURL" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+    <NavigationProperty Name="Listing" Relationship="Self.FK__Images__ListingI__440B1D61" FromRole="Images" ToRole="Listings" />
+  </EntityType>
+  <EntityType Name="Legal">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="CategoryId" Type="Int32" />
+    <Property Name="Description" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+    <Property Name="CreatedAt" Type="DateTime" Precision="3" />
+    <NavigationProperty Name="Category" Relationship="Self.FK__Legal__CategoryI__5441852A" FromRole="Legal" ToRole="Categories" />
+  </EntityType>
+  <EntityType Name="Listing">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="UserId" Type="Int32" />
+    <Property Name="CategoryId" Type="Int32" />
+    <Property Name="Title" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+    <Property Name="Description" Type="String" MaxLength="400" FixedLength="false" Unicode="true" />
+    <Property Name="Price" Type="Decimal" Precision="18" Scale="2" />
+    <Property Name="Location" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+    <Property Name="Status" Type="Int32" />
+    <Property Name="CreatedAt" Type="DateTime" Precision="3" />
+    <Property Name="UpdateAt" Type="DateTime" Precision="3" />
+    <NavigationProperty Name="Category" Relationship="Self.FK__Listings__Catego__412EB0B6" FromRole="Listings" ToRole="Categories" />
+    <NavigationProperty Name="Favorites" Relationship="Self.FK__Favorites__Listi__4E88ABD4" FromRole="Listings" ToRole="Favorites" />
+    <NavigationProperty Name="Images" Relationship="Self.FK__Images__ListingI__440B1D61" FromRole="Listings" ToRole="Images" />
+    <NavigationProperty Name="User" Relationship="Self.FK__Listings__UserId__403A8C7D" FromRole="Listings" ToRole="Users" />
+    <NavigationProperty Name="Locations" Relationship="Self.FK__Locations__Listi__5165187F" FromRole="Listings" ToRole="Locations" />
+    <NavigationProperty Name="Messages" Relationship="Self.FK__Messages__Listin__4AB81AF0" FromRole="Listings" ToRole="Messages" />
+    <NavigationProperty Name="Notifications" Relationship="Self.FK__Notificat__Listi__59063A47" FromRole="Listings" ToRole="Notifications" />
+  </EntityType>
+  <EntityType Name="Location">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="ListingId" Type="Int32" />
+    <Property Name="Lat" Type="Decimal" Precision="9" Scale="6" />
+    <Property Name="Long" Type="Decimal" Precision="9" Scale="6" />
+    <Property Name="Address" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+    <NavigationProperty Name="Listing" Relationship="Self.FK__Locations__Listi__5165187F" FromRole="Locations" ToRole="Listings" />
+  </EntityType>
+  <EntityType Name="Message">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="SenderId" Type="Int32" />
+    <Property Name="ReceiverId" Type="Int32" />
+    <Property Name="ListingId" Type="Int32" />
+    <Property Name="Content" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+    <Property Name="SentAt" Type="DateTime" Precision="3" />
+    <NavigationProperty Name="Listing" Relationship="Self.FK__Messages__Listin__4AB81AF0" FromRole="Messages" ToRole="Listings" />
+    <NavigationProperty Name="User" Relationship="Self.FK__Messages__Receiv__49C3F6B7" FromRole="Messages" ToRole="Users" />
+    <NavigationProperty Name="User1" Relationship="Self.FK__Messages__Sender__48CFD27E" FromRole="Messages" ToRole="Users" />
+  </EntityType>
+  <EntityType Name="Notification">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="UserId" Type="Int32" />
+    <Property Name="RelatedUserId" Type="Int32" />
+    <Property Name="ListingId" Type="Int32" />
+    <Property Name="Message" Type="String" MaxLength="200" FixedLength="false" Unicode="true" />
+    <Property Name="IsRead" Type="Boolean" />
+    <Property Name="CreatedAt" Type="DateTime" Precision="3" />
+    <NavigationProperty Name="Listing" Relationship="Self.FK__Notificat__Listi__59063A47" FromRole="Notifications" ToRole="Listings" />
+    <NavigationProperty Name="User" Relationship="Self.FK__Notificat__Relat__5812160E" FromRole="Notifications" ToRole="Users" />
+    <NavigationProperty Name="User1" Relationship="Self.FK__Notificat__UserI__571DF1D5" FromRole="Notifications" ToRole="Users" />
+  </EntityType>
+  <EntityType Name="Rating">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="UserId" Type="Int32" />
+    <Property Name="ReviewerId" Type="Int32" />
+    <Property Name="Score" Type="Decimal" Precision="2" Scale="1" />
+    <Property Name="Comment" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+    <Property Name="CreatedAt" Type="DateTime" Precision="3" />
+    <NavigationProperty Name="User" Relationship="Self.FK__Ratings__Reviewe__3A81B327" FromRole="Ratings" ToRole="Users" />
+    <NavigationProperty Name="User1" Relationship="Self.FK__Ratings__UserId__398D8EEE" FromRole="Ratings" ToRole="Users" />
+  </EntityType>
+  <EntityType Name="Store">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="OwnerId" Type="Int32" />
+    <Property Name="Name" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+    <Property Name="Description" Type="String" MaxLength="600" FixedLength="false" Unicode="true" />
+    <Property Name="Logo" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+    <Property Name="Status" Type="Int32" />
+    <Property Name="CreatedAt" Type="DateTime" Precision="3" />
+    <Property Name="Address" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+    <Property Name="Lat" Type="Decimal" Precision="9" Scale="6" />
+    <Property Name="Long" Type="Decimal" Precision="9" Scale="6" />
+    <NavigationProperty Name="User" Relationship="Self.FK__Stores__OwnerId__5FB337D6" FromRole="Stores" ToRole="Users" />
+  </EntityType>
+  <EntityType Name="User">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+    <Property Name="FullName" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+    <Property Name="Email" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+    <Property Name="Phone" Type="String" MaxLength="12" FixedLength="false" Unicode="true" />
+    <Property Name="LoginName" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+    <Property Name="Password" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+    <Property Name="Avatar" Type="String" MaxLength="1000" FixedLength="false" Unicode="false" />
+    <Property Name="Role" Type="Int32" />
+    <Property Name="Online" Type="Boolean" />
+    <Property Name="CreatedAt" Type="DateTime" Precision="3" />
+    <NavigationProperty Name="Favorites" Relationship="Self.FK__Favorites__UserI__4D94879B" FromRole="Users" ToRole="Favorites" />
+    <NavigationProperty Name="Follows" Relationship="Self.FK__Follows__Followe__5BE2A6F2" FromRole="Users" ToRole="Follows" />
+    <NavigationProperty Name="Follows1" Relationship="Self.FK__Follows__SellerI__5CD6CB2B" FromRole="Users" ToRole="Follows" />
+    <NavigationProperty Name="Listings" Relationship="Self.FK__Listings__UserId__403A8C7D" FromRole="Users" ToRole="Listings" />
+    <NavigationProperty Name="Messages" Relationship="Self.FK__Messages__Receiv__49C3F6B7" FromRole="Users" ToRole="Messages" />
+    <NavigationProperty Name="Messages1" Relationship="Self.FK__Messages__Sender__48CFD27E" FromRole="Users" ToRole="Messages" />
+    <NavigationProperty Name="Notifications" Relationship="Self.FK__Notificat__Relat__5812160E" FromRole="Users" ToRole="Notifications" />
+    <NavigationProperty Name="Notifications1" Relationship="Self.FK__Notificat__UserI__571DF1D5" FromRole="Users" ToRole="Notifications" />
+    <NavigationProperty Name="Ratings" Relationship="Self.FK__Ratings__Reviewe__3A81B327" FromRole="Users" ToRole="Ratings" />
+    <NavigationProperty Name="Ratings1" Relationship="Self.FK__Ratings__UserId__398D8EEE" FromRole="Users" ToRole="Ratings" />
+    <NavigationProperty Name="Stores" Relationship="Self.FK__Stores__OwnerId__5FB337D6" FromRole="Users" ToRole="Stores" />
+    <Property Name="Status" Type="Boolean" />
+  </EntityType>
+  <Association Name="FK__Categorie__Paren__3D5E1FD2">
+    <End Role="Categories" Type="Self.Category" Multiplicity="0..1" />
+    <End Role="Categories1" Type="Self.Category" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Categories">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="Categories1">
+        <PropertyRef Name="ParentId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK__Legal__CategoryI__5441852A">
+    <End Role="Categories" Type="Self.Category" Multiplicity="0..1" />
+    <End Role="Legal" Type="Self.Legal" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Categories">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="Legal">
+        <PropertyRef Name="CategoryId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK__Listings__Catego__412EB0B6">
+    <End Role="Categories" Type="Self.Category" Multiplicity="0..1" />
+    <End Role="Listings" Type="Self.Listing" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Categories">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="Listings">
+        <PropertyRef Name="CategoryId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK__Favorites__Listi__4E88ABD4">
+    <End Role="Listings" Type="Self.Listing" Multiplicity="0..1" />
+    <End Role="Favorites" Type="Self.Favorite" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Listings">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="Favorites">
+        <PropertyRef Name="ListingId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK__Favorites__UserI__4D94879B">
+    <End Role="Users" Type="Self.User" Multiplicity="0..1" />
+    <End Role="Favorites" Type="Self.Favorite" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Users">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="Favorites">
+        <PropertyRef Name="UserId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK__Follows__Followe__5BE2A6F2">
+    <End Role="Users" Type="Self.User" Multiplicity="0..1" />
+    <End Role="Follows" Type="Self.Follow" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Users">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="Follows">
+        <PropertyRef Name="FollowerId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK__Follows__SellerI__5CD6CB2B">
+    <End Role="Users" Type="Self.User" Multiplicity="0..1" />
+    <End Role="Follows" Type="Self.Follow" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Users">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="Follows">
+        <PropertyRef Name="SellerId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK__Images__ListingI__440B1D61">
+    <End Role="Listings" Type="Self.Listing" Multiplicity="0..1" />
+    <End Role="Images" Type="Self.Image" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Listings">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="Images">
+        <PropertyRef Name="ListingId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK__Listings__UserId__403A8C7D">
+    <End Role="Users" Type="Self.User" Multiplicity="0..1" />
+    <End Role="Listings" Type="Self.Listing" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Users">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="Listings">
+        <PropertyRef Name="UserId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK__Locations__Listi__5165187F">
+    <End Role="Listings" Type="Self.Listing" Multiplicity="0..1" />
+    <End Role="Locations" Type="Self.Location" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Listings">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="Locations">
+        <PropertyRef Name="ListingId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK__Messages__Listin__4AB81AF0">
+    <End Role="Listings" Type="Self.Listing" Multiplicity="0..1" />
+    <End Role="Messages" Type="Self.Message" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Listings">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="Messages">
+        <PropertyRef Name="ListingId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK__Notificat__Listi__59063A47">
+    <End Role="Listings" Type="Self.Listing" Multiplicity="0..1" />
+    <End Role="Notifications" Type="Self.Notification" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Listings">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="Notifications">
+        <PropertyRef Name="ListingId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK__Messages__Receiv__49C3F6B7">
+    <End Role="Users" Type="Self.User" Multiplicity="0..1" />
+    <End Role="Messages" Type="Self.Message" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Users">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="Messages">
+        <PropertyRef Name="ReceiverId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK__Messages__Sender__48CFD27E">
+    <End Role="Users" Type="Self.User" Multiplicity="0..1" />
+    <End Role="Messages" Type="Self.Message" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Users">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="Messages">
+        <PropertyRef Name="SenderId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK__Notificat__Relat__5812160E">
+    <End Role="Users" Type="Self.User" Multiplicity="0..1" />
+    <End Role="Notifications" Type="Self.Notification" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Users">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="Notifications">
+        <PropertyRef Name="RelatedUserId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK__Notificat__UserI__571DF1D5">
+    <End Role="Users" Type="Self.User" Multiplicity="0..1" />
+    <End Role="Notifications" Type="Self.Notification" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Users">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="Notifications">
+        <PropertyRef Name="UserId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK__Ratings__Reviewe__3A81B327">
+    <End Role="Users" Type="Self.User" Multiplicity="0..1" />
+    <End Role="Ratings" Type="Self.Rating" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Users">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="Ratings">
+        <PropertyRef Name="ReviewerId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK__Ratings__UserId__398D8EEE">
+    <End Role="Users" Type="Self.User" Multiplicity="0..1" />
+    <End Role="Ratings" Type="Self.Rating" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Users">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="Ratings">
+        <PropertyRef Name="UserId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK__Stores__OwnerId__5FB337D6">
+    <End Role="Users" Type="Self.User" Multiplicity="0..1" />
+    <End Role="Stores" Type="Self.Store" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="Users">
+        <PropertyRef Name="Id" />
+      </Principal>
+      <Dependent Role="Stores">
+        <PropertyRef Name="OwnerId" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <EntityContainer Name="Mua_Ban_Vao_Vat_Entities" annotation:LazyLoadingEnabled="true">
+    <EntitySet Name="Banners" EntityType="Self.Banner" />
+    <EntitySet Name="Categories" EntityType="Self.Category" />
+    <EntitySet Name="Favorites" EntityType="Self.Favorite" />
+    <EntitySet Name="Follows" EntityType="Self.Follow" />
+    <EntitySet Name="Images" EntityType="Self.Image" />
+    <EntitySet Name="Legals" EntityType="Self.Legal" />
+    <EntitySet Name="Listings" EntityType="Self.Listing" />
+    <EntitySet Name="Locations" EntityType="Self.Location" />
+    <EntitySet Name="Messages" EntityType="Self.Message" />
+    <EntitySet Name="Notifications" EntityType="Self.Notification" />
+    <EntitySet Name="Ratings" EntityType="Self.Rating" />
+    <EntitySet Name="Stores" EntityType="Self.Store" />
+    <EntitySet Name="Users" EntityType="Self.User" />
+    <AssociationSet Name="FK__Categorie__Paren__3D5E1FD2" Association="Self.FK__Categorie__Paren__3D5E1FD2">
+      <End Role="Categories" EntitySet="Categories" />
+      <End Role="Categories1" EntitySet="Categories" />
+    </AssociationSet>
+    <AssociationSet Name="FK__Legal__CategoryI__5441852A" Association="Self.FK__Legal__CategoryI__5441852A">
+      <End Role="Categories" EntitySet="Categories" />
+      <End Role="Legal" EntitySet="Legals" />
+    </AssociationSet>
+    <AssociationSet Name="FK__Listings__Catego__412EB0B6" Association="Self.FK__Listings__Catego__412EB0B6">
+      <End Role="Categories" EntitySet="Categories" />
+      <End Role="Listings" EntitySet="Listings" />
+    </AssociationSet>
+    <AssociationSet Name="FK__Favorites__Listi__4E88ABD4" Association="Self.FK__Favorites__Listi__4E88ABD4">
+      <End Role="Listings" EntitySet="Listings" />
+      <End Role="Favorites" EntitySet="Favorites" />
+    </AssociationSet>
+    <AssociationSet Name="FK__Favorites__UserI__4D94879B" Association="Self.FK__Favorites__UserI__4D94879B">
+      <End Role="Users" EntitySet="Users" />
+      <End Role="Favorites" EntitySet="Favorites" />
+    </AssociationSet>
+    <AssociationSet Name="FK__Follows__Followe__5BE2A6F2" Association="Self.FK__Follows__Followe__5BE2A6F2">
+      <End Role="Users" EntitySet="Users" />
+      <End Role="Follows" EntitySet="Follows" />
+    </AssociationSet>
+    <AssociationSet Name="FK__Follows__SellerI__5CD6CB2B" Association="Self.FK__Follows__SellerI__5CD6CB2B">
+      <End Role="Users" EntitySet="Users" />
+      <End Role="Follows" EntitySet="Follows" />
+    </AssociationSet>
+    <AssociationSet Name="FK__Images__ListingI__440B1D61" Association="Self.FK__Images__ListingI__440B1D61">
+      <End Role="Listings" EntitySet="Listings" />
+      <End Role="Images" EntitySet="Images" />
+    </AssociationSet>
+    <AssociationSet Name="FK__Listings__UserId__403A8C7D" Association="Self.FK__Listings__UserId__403A8C7D">
+      <End Role="Users" EntitySet="Users" />
+      <End Role="Listings" EntitySet="Listings" />
+    </AssociationSet>
+    <AssociationSet Name="FK__Locations__Listi__5165187F" Association="Self.FK__Locations__Listi__5165187F">
+      <End Role="Listings" EntitySet="Listings" />
+      <End Role="Locations" EntitySet="Locations" />
+    </AssociationSet>
+    <AssociationSet Name="FK__Messages__Listin__4AB81AF0" Association="Self.FK__Messages__Listin__4AB81AF0">
+      <End Role="Listings" EntitySet="Listings" />
+      <End Role="Messages" EntitySet="Messages" />
+    </AssociationSet>
+    <AssociationSet Name="FK__Notificat__Listi__59063A47" Association="Self.FK__Notificat__Listi__59063A47">
+      <End Role="Listings" EntitySet="Listings" />
+      <End Role="Notifications" EntitySet="Notifications" />
+    </AssociationSet>
+    <AssociationSet Name="FK__Messages__Receiv__49C3F6B7" Association="Self.FK__Messages__Receiv__49C3F6B7">
+      <End Role="Users" EntitySet="Users" />
+      <End Role="Messages" EntitySet="Messages" />
+    </AssociationSet>
+    <AssociationSet Name="FK__Messages__Sender__48CFD27E" Association="Self.FK__Messages__Sender__48CFD27E">
+      <End Role="Users" EntitySet="Users" />
+      <End Role="Messages" EntitySet="Messages" />
+    </AssociationSet>
+    <AssociationSet Name="FK__Notificat__Relat__5812160E" Association="Self.FK__Notificat__Relat__5812160E">
+      <End Role="Users" EntitySet="Users" />
+      <End Role="Notifications" EntitySet="Notifications" />
+    </AssociationSet>
+    <AssociationSet Name="FK__Notificat__UserI__571DF1D5" Association="Self.FK__Notificat__UserI__571DF1D5">
+      <End Role="Users" EntitySet="Users" />
+      <End Role="Notifications" EntitySet="Notifications" />
+    </AssociationSet>
+    <AssociationSet Name="FK__Ratings__Reviewe__3A81B327" Association="Self.FK__Ratings__Reviewe__3A81B327">
+      <End Role="Users" EntitySet="Users" />
+      <End Role="Ratings" EntitySet="Ratings" />
+    </AssociationSet>
+    <AssociationSet Name="FK__Ratings__UserId__398D8EEE" Association="Self.FK__Ratings__UserId__398D8EEE">
+      <End Role="Users" EntitySet="Users" />
+      <End Role="Ratings" EntitySet="Ratings" />
+    </AssociationSet>
+    <AssociationSet Name="FK__Stores__OwnerId__5FB337D6" Association="Self.FK__Stores__OwnerId__5FB337D6">
+      <End Role="Users" EntitySet="Users" />
+      <End Role="Stores" EntitySet="Stores" />
+    </AssociationSet>
+  </EntityContainer>
+</Schema>

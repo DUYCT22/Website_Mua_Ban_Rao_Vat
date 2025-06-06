@@ -1,0 +1,337 @@
+﻿@model Website_Mua_Ban_Rao_Vat.Models.UserModel
+@using Website_Mua_Ban_Rao_Vat.Models
+@{
+    ViewBag.Title = "Trang người bán";
+    var user = Model.user;
+    var follows = Model.follows;
+    var ratings = Model.Rating;
+}
+@functions {
+    public string ToSlug(string str)
+    {
+        return str.ToLower()
+                  .Replace(" ", "-")
+                  .Replace("/", "")
+                  .Replace("(", "")
+                  .Replace(")", "")
+                  .Replace("+", "")
+                  .Replace(".", "")
+                  .Replace(",", "")
+                  .Replace("?", "")
+                  .Replace("!", "")
+                  .Replace(":", "")
+                  .Replace(";", "")
+                  .Replace("đ", "d")
+                  .Normalize(System.Text.NormalizationForm.FormD)
+                  .Where(c => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
+                  .Aggregate("", (s, c) => s + c)
+                  .Replace("--", "-");
+    }
+}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+
+    $(document).ready(function () {
+                         $(document).on('click', '#btnFollow', function () {
+    var listingId = $(this).data('id');
+    $.ajax({
+        url: '@Url.Action("Follow", "User")',
+        type: 'POST',
+        data: { id: listingId, type: "listing" },
+        success: function (response) {
+            if (response.success) {
+                Swal.fire({
+                    position: "top-center",
+                    text: response.message,
+                    icon: "success",
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+                $('#btnFollow').replaceWith(`
+                    <a href="javascript:void(0);"
+                       class="btn btn-info"
+                       id="btnUnFollow"
+                       style="width:100%"
+                       data-id="${listingId}">Đang theo dõi</a>
+                `);
+            } else {
+                Swal.fire({
+                    position: "top-center",
+                    text: response.message,
+                    icon: "error",
+                    showConfirmButton: true
+                });
+             }
+        },
+        error: function () {
+            alert("Lỗi khi gửi yêu cầu.");
+        }
+    });
+         });
+         $(document).on('click', '#btnUnFollow', function () {
+    var listingId = $(this).data('id');
+
+    Swal.fire({
+        title: 'Bạn có chắc chắn?',
+        text: 'Bạn muốn hủy theo dõi người bán này?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Đồng ý',
+        cancelButtonText: 'Hủy bỏ'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '@Url.Action("UnFollow", "User")',
+                type: 'POST',
+                data: { id: listingId, type: "listing" },
+                success: function (response) {
+                    Swal.fire({
+                        position: "top-center",
+                        text: response.message,
+                        icon: response.success ? "success" : "error",
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+                    if (response.success) {
+                        $('#btnUnFollow').replaceWith(`
+                        <a href="javascript:void(0);"
+                           class="btn btn-outline-info"
+                           id="btnFollow"
+                           style="width:100%"
+                           data-id="${listingId}">
+                            <i class="bi bi-person-plus-fill"></i> Theo dõi
+                        </a>
+                    `);
+                    }
+                },
+                error: function () {
+                    Swal.fire({
+                        position: "top-center",
+                        text: "Lỗi khi gửi yêu cầu.",
+                        icon: "error",
+                        showConfirmButton: true
+                    });
+                }
+            });
+        }
+    });
+         });
+                   $('#ratingForm').submit(function (e) {
+    e.preventDefault();
+
+                       const ratingButton = document.getElementById("ratingButton");; 
+                       ratingButton.disabled = true;
+                       const originalText = ratingButton.innerHTML;
+                       ratingButton.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
+
+    $.ajax({
+        url: '@Url.Action("CreateRating", "Listing")',
+        type: 'POST',
+        data: $(this).serialize(),
+        success: function (res) {
+            Swal.fire({
+                text: res.message,
+                icon: res.success ? 'success' : 'error',
+                timer: 1500
+            }).then(() => location.reload());
+            loginButton.disabled = false;
+            loginButton.innerHTML = originalText;
+        },
+        error: function () {
+            Swal.fire({
+                text: 'Có lỗi xảy ra!',
+                icon: 'error'
+            });
+            loginButton.disabled = false;
+            loginButton.innerHTML = originalText;
+        }
+    });
+});
+
+    });
+</script>
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="position-relative d-inline-block" id="avatarContainer" style="width: 100%; height: 100%;">
+                    <img src="@Url.Content(user.Avatar ?? "~/Content/img/default-avatar.png")"
+                         class="img-fluid rounded"
+                         id="currentAvatar"
+                         style="width: 100%; height: 100%; object-fit: cover; filter: none; transition: filter 0.3s;" />
+                </div>
+                <div class="card-body">
+
+                    <h5 class="card-title">@user.FullName</h5>
+                    <p><i class="bi bi-envelope"></i> @user.Email</p>
+                    <p><i class="bi bi-telephone"></i> @user.Phone</p>
+                    <p><i class="bi bi-person-circle"></i> @user.CreatedAt.Value.ToString("dd/MM/yyyy")</p>
+                    <hr />
+                    <p><strong>@follows.Count</strong> người theo dõi</p>
+                    <p><strong>@ratings.Count</strong> đánh giá</p>
+                    @if (ViewBag.Follow != null && ViewBag.Follow.Count == 1)
+                    {
+                        <a href="javascript:void(0);"
+                           class="btn btn-info"
+                           id="btnUnFollow"
+                           style="width:100%"
+                           data-id="@user.Id">
+                            Đang theo dõi
+                        </a>
+                    }
+                    else
+                    {
+                        <a href="javascript:void(0);"
+                           class="btn btn-outline-info"
+                           id="btnFollow"
+                           style="width:100%"
+                           data-id="@user.Id">
+                            <i class="bi bi-person-plus-fill"></i> Theo dõi
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <ul class="nav nav-tabs mb-3" id="profileTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#listings" type="button">Tin đang hiển thị</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#sold" type="button">Tin đã bán</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#ratings" type="button">Đánh giá</button>
+                </li>
+                @if (Session["userId"] != null)
+                {
+                    if (!ratings.Any(r => r.ReviewerId == (int)Session["userId"]))
+                    {
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#writeRating" type="button">Viết đánh giá</button>
+                        </li>
+                    }
+                }
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="listings">
+                    <div class="row">
+                        @if (Model.listingShowing.Any())
+                        {
+                            foreach (var item in Model.listingShowing)
+                            {
+                                <a class="col-md-3 mb-3"
+                                   href="@Url.RouteUrl("FriendlyDetail", new { slug = ToSlug(item.Title), encryptedId = IdProtector.EncryptId(item.Id) })"
+                                   target="_blank"
+                                   style="text-decoration:none"
+                                   onclick="openFullscreen(event, this.href)">
+                                    <div class="card h-100 shadow-sm border-0">
+                                        @{
+                                            var firstImage = item.Images?.FirstOrDefault()?.ImageURL;
+                                        }
+
+                                        @if (!string.IsNullOrEmpty(firstImage))
+                                        {
+                                            <img src="@firstImage" style="height: 180px; object-fit: cover;" class="card-img-top" alt="Hình ảnh">
+                                        }
+                                        else
+                                        {
+                                            <img src="@Url.Content("~/Contents/image/no_image.png")" class="card-img-top" alt="Không có ảnh">
+                                        }
+                                        <div class="card-body">
+                                            <h5 class="card-title text-truncate">@item.Title</h5>
+                                            <p class="text-danger fw-bold">@string.Format("{0:N0} đ", item.Price)</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-muted">Không có tin đăng đang hiển thị.</p>
+                        }
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="sold">
+                    <div class="row">
+                        @if (Model.listingSold.Any())
+                        {
+                            foreach (var item in Model.listingSold)
+                            {
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100 shadow-sm border-0">
+                                        @{
+                                            var firstImage = item.Images?.FirstOrDefault()?.ImageURL;
+                                        }
+
+                                        @if (!string.IsNullOrEmpty(firstImage))
+                                        {
+                                            <img src="@Url.Content("~/Contents/image/listing/" + firstImage)" style="height: 180px; object-fit: cover;" class="card-img-top" alt="Hình ảnh">
+                                        }
+                                        else
+                                        {
+                                            <img src="@Url.Content("~/Contents/image/no_image.png")" class="card-img-top" alt="Không có ảnh">
+                                        }
+                                        <div class="card-body">
+                                            <h5 class="card-title">@item.Title</h5>
+                                            <p class="card-text text-truncate">@item.Description</p>
+                                            <p class="text-muted">Giá: @string.Format("{0:N0} đ", item.Price)</p>
+                                            <span class="badge bg-success">Đã bán</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-muted">Không có tin nào đã bán.</p>
+                        }
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="ratings">
+                    @if (ratings.Any())
+                    {
+                        foreach (var r in ratings)
+                        {
+                            <div class="border rounded p-3 mb-2 shadow-sm">
+                                <p><strong>@r.User.FullName</strong> đánh giá: <span class="text-warning">@r.Score ★</span></p>
+                                <p class="text-muted"><i>@(r.CreatedAt?.ToString("dd/MM/yyyy HH:mm"))</i></p>
+                                <p>@r.Comment</p>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted">Không có đánh giá.</p>
+                    }
+                </div>
+
+                <div class="tab-pane fade" id="writeRating">
+                        <form id="ratingForm">
+                            <div class="mb-2">
+                                <label>Số sao:</label>
+                                <select name="score" class="form-select" required>
+                                    <option value="1">1 sao</option>
+                                    <option value="2">2 sao</option>
+                                    <option value="3">3 sao</option>
+                                    <option value="4">4 sao</option>
+                                    <option value="5">5 sao</option>
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <label>Viết đánh giá:</label>
+                                <textarea name="comment" class="form-control" rows="3" required></textarea>
+                            </div>
+                            <input type="hidden" name="userId" value="@user.Id" />
+                            <button id="ratingButton" type="submit" class="btn btn-primary">Gửi đánh giá</button>
+                        </form>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+</div>

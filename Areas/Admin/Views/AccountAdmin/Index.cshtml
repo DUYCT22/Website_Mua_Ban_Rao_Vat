@@ -1,0 +1,207 @@
+﻿@using PagedList.Mvc
+@model PagedList.IPagedList<Website_Mua_Ban_Rao_Vat.Models.User>
+
+@{
+    ViewBag.Title = "Quản lý tài khoản";
+}
+<style>
+    img.image-show:hover {
+        transform: scale(1.05);
+    }
+
+    .modal-img {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        padding-top: 60px;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.8);
+    }
+    .pagination li a {
+        class: page-link;
+        display: block;
+        padding: 0.5rem 0.75rem;
+        color: #007bff;
+        text-decoration: none;
+        background-color: #fff;
+        border: 1px solid #dee2e6;
+        margin-left: -1px;
+    }
+
+    .pagination li.active a {
+        z-index: 1;
+        color: #fff;
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+    .pagination li.disabled a {
+        color: #6c757d;
+        pointer-events: none;
+        background-color: #fff;
+        border-color: #dee2e6;
+    }
+</style>
+<h2>🚹 Quản lý tài khoản</h2>
+
+<form method="get" class="mb-3">
+    <div class="row g-2">
+        <div class="col-md-4">
+            <input type="text" name="search" class="form-control" placeholder="Tìm tên, email, sđt, tên đăng nhập..." value="@Request["search"]" />
+        </div>
+        <div class="col-md-3">
+            @Html.DropDownList("role", new SelectList(new[] {
+                new { Value = "", Text = "Tất cả vai trò" },
+                new { Value = "0", Text = "Người dùng" },
+                new { Value = "1", Text = "Quản trị viên" }
+            }, "Value", "Text", Request["role"]), new { @class = "form-control" })
+
+        </div>
+        <div class="col-md-3">
+            @Html.DropDownList("dateSort", new SelectList(new[] {
+                new { Value = "", Text = "Tất cả Ngày tạo" },
+                new { Value = "newest", Text = "Gần nhất" },
+                new { Value = "oldest", Text = "Xa nhất" }
+            }, "Value", "Text", Request["dateSort"]), new { @class = "form-control" })
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-primary w-100">Tìm kiếm</button>
+        </div>
+    </div>
+</form>
+
+<table class="table table-bordered table-striped table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Hình đại diện</th>
+            <th>Họ tên</th>
+            <th>Email</th>
+            <th>SĐT</th>
+            <th>Tên đăng nhập</th>
+            <th>Vai trò</th>
+            <th>Trạng thái</th>
+            <th>Ngày tạo</th>
+            <th>Thao tác</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>
+                    <img style="cursor:pointer" class="image-show" src="@Url.Content(user.Avatar)" alt="Image" width="80" onclick="showModal(this.src)" />
+                </td>
+                <td>@user.FullName</td>
+                <td><a href="mailto:@user.Email">@user.Email</a></td>
+                <td>@user.Phone</td>
+                <td>@user.LoginName</td>
+                <td>
+                    @(user.Role == 1 ? "Quản trị viên" : "Người dùng")
+                </td>
+
+                <td>
+                    @if (user.Status == true)
+                    {
+                        <p class="bg-success text-center">
+                            <span class="text-light m-2">Hoạt động</span>
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="bg-danger text-center bg">
+                            <span class="text-light m-2">Bị khóa</span>
+                        </p>
+                    }
+                </td>
+                <td>@(user.CreatedAt.HasValue ? user.CreatedAt.Value.ToString("dd/MM/yyyy HH:mm") : "Không")</td>
+
+                <td>
+                    @if (user.Status == true)
+                    {
+                        <button class="btn btn-danger btn-sm" onclick="changeStatus(@user.Id, false)">Khóa</button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-success btn-sm" onclick="changeStatus(@user.Id, true)">Mở khóa</button>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@Html.PagedListPager(Model, page => Url.Action("Index", new
+{
+    page,
+    search = Request["search"],
+    role = Request["role"],
+    status = Request["status"],
+    createdFrom = Request["createdFrom"],
+    createdTo = Request["createdTo"]
+}), new PagedListRenderOptions
+{
+    MaximumPageNumbersToDisplay = 5,
+    UlElementClasses = new[] { "pagination", "pagination-lg", "justify-content-center" },
+    LiElementClasses = new[] { "page-item" },
+
+    DisplayLinkToFirstPage = PagedListDisplayMode.Always,
+    DisplayLinkToLastPage = PagedListDisplayMode.Always,
+    DisplayLinkToPreviousPage = PagedListDisplayMode.Always,
+    DisplayLinkToNextPage = PagedListDisplayMode.Always,
+    DisplayLinkToIndividualPages = true,
+
+    LinkToPreviousPageFormat = "«",
+    LinkToNextPageFormat = "»",
+    LinkToFirstPageFormat = "««",
+    LinkToLastPageFormat = "»»"
+})
+<script>
+    function showModal(src) {
+        Swal.fire({
+            imageUrl: src,
+            imageAlt: "Ảnh phóng to",
+            showConfirmButton: false,
+            showCloseButton: true
+        });
+    }
+    function changeStatus(id, status) {
+        const action = status ? 'Unlock' : 'Lock';
+        const confirmText = status ? 'Bạn có chắc chắn muốn mở khóa tài khoản này?' : 'Bạn có chắc chắn muốn khóa tài khoản này?';
+        const successText = status ? 'Tài khoản đã được mở khóa!' : 'Tài khoản đã bị khóa!';
+
+        Swal.fire({
+            title: 'Xác nhận',
+            html: confirmText,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Xác nhận',
+            cancelButtonText: 'Hủy',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.post('/AccountAdmin/' + action, { id: id }, function (data) {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Thành công',
+                            text: data.message,
+                            timer: 1200,
+                            showConfirmButton: false
+                        }).then(() => location.reload());
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lỗi',
+                            text: data.message
+                        });
+                    }
+                });
+            }
+        });
+    }
+</script>
+

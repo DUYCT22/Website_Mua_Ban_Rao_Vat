@@ -1,0 +1,91 @@
+﻿
+@model Website_Mua_Ban_Rao_Vat.Models.HomeModel
+@using Website_Mua_Ban_Rao_Vat.Models;
+@functions {
+    public string ToSlug(string str)
+    {
+        return str.ToLower()
+                  .Replace(" ", "-")
+                  .Replace("/", "")
+                  .Replace("(", "")
+                  .Replace(")", "")
+                  .Replace("+", "")
+                  .Replace(".", "")
+                  .Replace(",", "")
+                  .Replace("?", "")
+                  .Replace("!", "")
+                  .Replace(":", "")
+                  .Replace(";", "")
+                  .Replace("đ", "d")
+                  .Normalize(System.Text.NormalizationForm.FormD)
+                  .Where(c => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
+                  .Aggregate("", (s, c) => s + c)
+                  .Replace("--", "-");
+    }
+}
+@foreach (var post in Model.Listing)
+{
+    <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-3 d-flex">
+        <a class="card shadow-sm h-100 w-100"
+           href="@Url.RouteUrl("FriendlyDetail", new { slug = ToSlug(post.Title), encryptedId = IdProtector.EncryptId(post.Id) })"
+           target="_blank"
+           style="text-decoration:none; max-height:fit-content"
+           onclick="openFullscreen(event, this.href)">
+            @{
+                var firstImage = post.Images?.FirstOrDefault()?.ImageURL;
+            }
+
+            <div class="position-relative">
+                @if (!string.IsNullOrEmpty(firstImage))
+                {
+                    <img src="@firstImage" class="card-img-top" alt="Hình ảnh"
+                         style="height:170px; object-fit:cover;" />
+                }
+                else
+                {
+                    <img src="@Url.Content("~/Contents/image/no_image.png")" class="card-img-top" alt="Không có ảnh"
+                         style="height:170px; object-fit:cover;" />
+                }
+                <img src="~/Contents/image/Tin_Tot_span.png"
+                     class="position-absolute"
+                     style="bottom: 0.1px; right: 0.1px; width: 80px; height: 30px"
+                     alt="icon nhỏ">
+            </div>
+
+
+            <div class="card-body">
+                <h6 class="card-title text-truncate" style="max-width: 100%;">@post.Title</h6>
+                <p class="card-text" style="color:red">@String.Format("{0:N0} đ", post.Price)</p>
+                @{
+                    decimal rawAvg = Model.UserRatingAvg.ContainsKey(post.User.Id) ? Model.UserRatingAvg[post.User.Id] : 0;
+                    double avgStar = (double)rawAvg;
+                    int fullStars = (int)Math.Floor(avgStar);
+                    bool hasHalfStar = (avgStar - fullStars) >= 0.5;
+                    int emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+                }
+                <div class="row ">
+                    <div class="col-3">
+                        <img class="rounded-circle border" src="@Url.Content(post.User.Avatar)" alt="Hình ảnh" style="width: 40px; height: 45px; object-fit: cover;">
+                    </div>
+                    <div class="col-9">
+                        <div>
+                            @for (int i = 0; i < fullStars; i++)
+                            {
+                                <i class="fa-solid fa-star" style="color: #FFD43B;"></i>
+                            }
+                            @if (hasHalfStar)
+                            {
+                                <i class="fa-solid fa-star-half-stroke" style="color: #FFD43B;"></i>
+                            }
+                            @for (int i = 0; i < emptyStars; i++)
+                            {
+                                <i class="fa-regular fa-star" style="color: #FFD43B;"></i>
+                            }
+                        </div>
+                        <p>@(post.CreatedAt.HasValue ? post.CreatedAt.Value.ToString("dd/MM/yyyy") : "")</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+}
