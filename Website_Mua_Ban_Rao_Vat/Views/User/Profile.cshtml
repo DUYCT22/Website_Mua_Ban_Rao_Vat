@@ -1,0 +1,505 @@
+﻿@model Website_Mua_Ban_Rao_Vat.Models.UserModel
+@{
+    ViewBag.Title = "Trang cá nhân";
+    var user = Model.user;
+    var follows = Model.follows;
+    var ratings = Model.Rating;
+}
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+<script>
+    $(document).ready(function () {
+        $('#editForm').submit(function (e) {
+            e.preventDefault();
+            $('#saveButton').prop('disabled', true);
+            $('#saveLoading').removeClass('d-none');
+            const formData = $(this).serialize();
+            $.ajax({
+                type: 'POST',
+                url: '/Listing/Edit',
+                data: formData,
+                success: function (response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Thành công!',
+                            text: response.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lỗi!',
+                            text: response.message
+                        });
+                    }
+                },
+                error: function () {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi hệ thống!',
+                        text: 'Vui lòng thử lại sau.'
+                    });
+                },
+                complete: function () {
+                    $('#saveButton').prop('disabled', false);
+                    $('#saveLoading').addClass('d-none');
+                }
+            });
+        });
+        const avatarContainer = $('#avatarContainer');
+        const currentAvatar = $('#currentAvatar');
+        const editIcon = $('#editIcon');
+        const uploadSection = $('#uploadSection');
+        avatarContainer.hover(
+            function () {
+                editIcon.show();
+                currentAvatar.css('filter', 'brightness(50%)');
+            },
+            function () {
+                editIcon.hide();
+                currentAvatar.css('filter', 'none');
+            }
+        );
+        editIcon.on('click', function () {
+            Swal.fire({
+                title: "Bạn có muốn thay đổi ảnh đại diện không?",
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonText: "Đồng ý",
+                cancelButtonText: "Hủy"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const modal = new bootstrap.Modal(document.getElementById('avatarModal'));
+                    modal.show();
+                }
+            });
+        });
+
+    });
+    function previewImage(event) {
+        const input = event.target;
+        const preview = document.getElementById('avatarPreview');
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                preview.src = e.target.result;
+                preview.classList.remove('d-none');
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    function saveAvatar() {
+        var avatarFile = document.getElementById('Avatar').files[0];
+        if (!avatarFile) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Vui lòng chọn ảnh!',
+                timer: 1500,
+                showConfirmButton: false
+            });
+            return;
+        }
+        $('#saveAvatarBtn').prop('disabled', true).hide();
+        $('#cancelAvatarBtn').prop('disabled', true).hide();
+        $('#loadingSpinner').removeClass('d-none');
+
+        var formData = new FormData();
+        formData.append("Avatar", avatarFile);
+
+        fetch('/User/ChangeAvatar', {
+            method: 'POST',
+            body: formData
+        })
+            .then(res => res.json())
+            .then(result => {
+                $('#saveAvatarBtn').prop('disabled', false).show();
+                $('#cancelAvatarBtn').prop('disabled', false).show();
+                $('#loadingSpinner').addClass('d-none');
+
+                if (result.success) {
+                    $('#currentAvatar').attr('src', result.avatarUrl);
+                    $('#avatarPreview').attr('src', result.avatarUrl);
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: result.message || 'Ảnh đại diện đã được cập nhật!',
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+                    const navAvatar = document.querySelector('.navbar-avatar');
+                    if (navAvatar) {
+                        navAvatar.src = result.avatarUrl + '?t=' + new Date().getTime();
+                    }
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('avatarModal'));
+                    modal.hide();
+                    $('#Avatar').val('');
+                    $('#avatarPreview').addClass('d-none').attr('src', '');
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: result.message || 'Có lỗi xảy ra!',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                $('#saveAvatarBtn').prop('disabled', false).show();
+                $('#loadingSpinner').addClass('d-none');
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi máy chủ!',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            });
+    }
+    function markAsSold(postId) {
+        Swal.fire({
+            title: 'Bạn có chắc?',
+            text: "Xác nhận bài đăng này đã bán?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: '✔️ Xác nhận',
+            cancelButtonText: '❌ Hủy',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const formData = new FormData();
+                formData.append('id', postId);
+                formData.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+
+                fetch('/Listing/MarkAsSold', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Thành công!',
+                                text: data.message,
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Thất bại!',
+                                text: data.message || 'Có lỗi xảy ra.'
+                            });
+                        }
+                    })
+                    .catch(() => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lỗi mạng!',
+                            text: 'Không thể kết nối đến server.'
+                        });
+                    });
+            }
+        });
+    }
+    function loadCategorySelect(selectedCategoryId) {
+        $.get('/Listing/GetCategories', function (data) {
+            let select = $('#editCategoryId');
+            select.empty();
+
+            let parentMap = {};
+            data.forEach(c => {
+                if (!c.ParentId) {
+                    parentMap[c.Id] = { ...c, children: [] };
+                }
+            });
+
+            data.forEach(c => {
+                if (c.ParentId && parentMap[c.ParentId]) {
+                    parentMap[c.ParentId].children.push(c);
+                }
+            });
+            select.append('<option value="">-- Chọn danh mục --</option>');
+            for (const [pid, parent] of Object.entries(parentMap)) {
+                select.append(`<option value="${parent.Id}" disabled>📁 ${parent.Name}</option>`);
+                parent.children.forEach(child => {
+                    select.append(`<option value="${child.Id}">↳ ${child.Name}</option>`);
+                });
+            }
+            if (selectedCategoryId) {
+                select.val(selectedCategoryId);
+            }
+        });
+    }
+
+    function openEditModal(id, categoryId, price) {
+        $('#editId').val(id);
+        $('#editPrice').val(price);
+        $('#editCategoryModal').modal('show');
+        loadCategorySelect(categoryId);
+    }
+
+</script>
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="position-relative d-inline-block" id="avatarContainer" style="width: 100%; height: 100%;">
+                    <img src="@Url.Content(user.Avatar ?? "~/Content/img/default-avatar.png")"
+                         class="img-fluid rounded"
+                         id="currentAvatar"
+                         style="width: 100%; height: 100%; object-fit: cover; filter: none; transition: filter 0.3s;" />
+                    <div id="editIcon"
+                         class="position-absolute top-50 start-50 translate-middle"
+                         style="display: none; cursor: pointer;">
+                        <i class="bi bi-pencil-square fs-1 text-white bg-dark bg-opacity-50 p-2 rounded-circle"></i>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">@user.FullName</h5>
+                    <p><i class="bi bi-envelope"></i> @user.Email</p>
+                    <p><i class="bi bi-telephone"></i> @user.Phone</p>
+                    <p><i class="bi bi-person-circle"></i> @user.CreatedAt.Value.ToString("dd/MM/yyyy")</p>
+                    <hr />
+                    <p><strong>@follows.Count</strong> người theo dõi</p>
+                    <p><strong>@ratings.Count</strong> đánh giá</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <ul class="nav nav-tabs mb-3" id="profileTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#listings" type="button">Tin đang hiển thị</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#listingpendingapproval" type="button">Tin đang chờ duyệt</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#sold" type="button">Tin đã bán</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#followers" type="button">Người theo dõi</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#ratings" type="button">Đánh giá</button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="listings">
+                    <div class="row">
+                        @if (Model.listingShowing.Any())
+                        {
+                            foreach (var item in Model.listingShowing)
+                            {
+                                <div class="col-md-3 mb-3">
+                                    <div class="card h-100 shadow-sm border-0">
+                                        @{
+                                            var firstImage = item.Images?.FirstOrDefault()?.ImageURL;
+                                        }
+
+                                        @if (!string.IsNullOrEmpty(firstImage))
+                                        {
+                                            <img src="@firstImage" style="height: 180px; object-fit: cover;" class="card-img-top" alt="Hình ảnh">
+                                        }
+                                        else
+                                        {
+                                            <img src="@Url.Content("~/Contents/image/no_image.png")" class="card-img-top" alt="Không có ảnh">
+                                        }
+                                    <div class="card-body">
+                                        <h5 class="card-title text-truncate">@item.Title</h5>
+                                        <p class="text-danger fw-bold">@string.Format("{0:N0} đ", item.Price)</p>
+                                        @Html.AntiForgeryToken()
+                                        <button class="btn btn-warning" onclick="markAsSold(@item.Id)">
+                                            ✔️ <span>Đã bán</span>
+                                        </button>
+                                        <button class="btn btn-info" onclick="openEditModal('@item.Id', '@item.CategoryId', '@item.Price')">
+                                            <i class="bi bi-pencil-square"></i> <span>Sửa</span>
+                                        </button>
+                                    </div>
+
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-muted">Không có tin đăng nào đang hiển thị.</p>
+                        }
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="listingpendingapproval">
+                    <div class="row">
+                        @if (Model.listingPendingApproval.Any())
+                        {
+                            foreach (var item in Model.listingPendingApproval)
+                            {
+                                <div class="col-md-3 mb-3">
+                                    <div class="card h-100 shadow-sm border-0">
+                                        @{
+                                            var firstImage = item.Images?.FirstOrDefault()?.ImageURL;
+                                        }
+
+                                        @if (!string.IsNullOrEmpty(firstImage))
+                                        {
+                                            <img src="@firstImage" style="height: 180px; object-fit: cover;" class="card-img-top" alt="Hình ảnh">
+                                        }
+                                        else
+                                        {
+                                            <img src="@Url.Content("~/Contents/image/no_image.png")" class="card-img-top" alt="Không có ảnh">
+                                        }
+                                        <div class="card-body">
+                                            <h5 class="card-title text-truncate">@item.Title</h5>
+                                            <p class="text-danger fw-bold">@string.Format("{0:N0} đ", item.Price)</p>
+                                            <span class="badge bg-success">Đang xét duyệt</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-muted">Không có tin nào đang chờ duyệt.</p>
+                        }
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="sold">
+                    <div class="row">
+                        @if (Model.listingSold.Any())
+                        {
+                            foreach (var item in Model.listingSold)
+                            {
+                                <div class="col-md-3 mb-3">
+                                    <div class="card h-100 shadow-sm border-0">
+                                        @{
+                                            var firstImage = item.Images?.FirstOrDefault()?.ImageURL;
+                                        }
+
+                                        @if (!string.IsNullOrEmpty(firstImage))
+                                        {
+                                            <img src="@Url.Content(firstImage)" style="height: 180px; object-fit: cover;" class="card-img-top" alt="Hình ảnh">
+                                        }
+                                        else
+                                        {
+                                            <img src="@Url.Content("~/Contents/image/no_image.png")" class="card-img-top" alt="Không có ảnh">
+                                        }
+                                        <div class="card-body">
+                                            <h5 class="card-title">@item.Title</h5>
+                                            <p class="text-muted">Giá: @string.Format("{0:N0} đ", item.Price)</p>
+                                            <span class="badge bg-success">Đã bán</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-muted">Không có tin nào đã bán.</p>
+                        }
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="followers">
+                    @if (follows.Any())
+                    {
+                        <ul class="list-group">
+                            @foreach (var f in follows)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <img class="rounded-circle" src="@f.User.Avatar" style="width:10%" />
+                                    @f.User.FullName
+                                    <span class="text-muted">@f.CreatedAt</span>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted">Không có người theo dõi.</p>
+                    }
+                </div>
+                <div class="tab-pane fade" id="ratings">
+                    @if (ratings.Any())
+                    {
+                        foreach (var r in ratings)
+                        {
+                            <div class="border rounded p-3 mb-2 shadow-sm">
+                                <p><strong>@r.User.FullName</strong> đánh giá: <span class="text-warning">@r.Score ★</span></p>
+                                <p class="text-muted"><i>@(r.CreatedAt?.ToString("dd/MM/yyyy HH:mm"))</i></p>
+                                <p>@r.Comment</p>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted">Không có đánh giá.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editForm" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editCategoryModalLabel">📝 Sửa Tin</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editId" name="Id" />
+                    <div class="mb-3" id="parentSelectGroup">
+                        <label class="form-label">🔗 Danh mục</label>
+                        <select name="CategoryId" id="editCategoryId" class="form-select">
+                            <option value="">-- Không chọn --</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="bi bi-coin"></i> Giá</label>
+                        <input type="number" name="Price" id="editPrice" class="form-control" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary" id="saveButton">
+                        💾 Lưu thay đổi
+                        <span id="saveLoading" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="avatarModal" tabindex="-1" aria-labelledby="avatarModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="avatarForm" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="avatarModalLabel">Thay đổi ảnh đại diện</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <label for="Avatar" class="form-label">Chọn ảnh</label>
+                    <input type="file" name="Avatar" id="Avatar" accept="image/*" class="form-control" onchange="previewImage(event)" />
+                    <img id="avatarPreview" class="avatar-preview mt-3 rounded d-none" style="max-width: 100%; max-height: 300px;" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelAvatarBtn" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" id="saveAvatarBtn" onclick="saveAvatar()">Lưu ảnh</button>
+                    <div id="loadingSpinner" class="spinner-border text-primary ms-3 d-none" role="status" style="width: 1.5rem; height: 1.5rem;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

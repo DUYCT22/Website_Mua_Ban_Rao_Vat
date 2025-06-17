@@ -1,0 +1,147 @@
+﻿@model List<Website_Mua_Ban_Rao_Vat.Models.Favorite>
+@using Website_Mua_Ban_Rao_Vat.Models
+@{
+    ViewBag.Title = "Tin đã lưu";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@functions {
+    public string ToSlug(string str)
+    {
+        return str.ToLower()
+                  .Replace(" ", "-")
+                  .Replace("/", "")
+                  .Replace("(", "")
+                  .Replace(")", "")
+                  .Replace("+", "")
+                  .Replace(".", "")
+                  .Replace(",", "")
+                  .Replace("?", "")
+                  .Replace("!", "")
+                  .Replace(":", "")
+                  .Replace(";", "")
+                  .Replace("đ", "d")
+                  .Normalize(System.Text.NormalizationForm.FormD)
+                  .Where(c => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
+                  .Aggregate("", (s, c) => s + c)
+                  .Replace("--", "-");
+    }
+}
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    function openFullscreen(event, url) {
+        event.preventDefault();
+        const win = window.open(url, '_blank');
+
+        if (win) {
+            win.focus();
+            win.onload = () => {
+                const docElm = win.document.documentElement;
+                if (docElm.requestFullscreen) {
+                    docElm.requestFullscreen().catch(err => {
+                        console.error("Error attempting to enable full-screen mode:", err);
+                    });
+                } else if (docElm.mozRequestFullScreen) {
+                    docElm.mozRequestFullScreen();
+                } else if (docElm.webkitRequestFullscreen) {
+                    docElm.webkitRequestFullscreen();
+                } else if (docElm.msRequestFullscreen) {
+                    docElm.msRequestFullscreen();
+                }
+            };
+        } else {
+            alert("Trình duyệt đã chặn popup. Vui lòng cho phép để xem ở chế độ toàn màn hình.");
+        }
+    }
+   $(document).ready(function () {
+    $('.btn-remove-favorite').click(function () {
+        var button = $(this);
+        var favoriteId = button.data('id');
+
+        Swal.fire({
+            title: "Xác nhận xóa?",
+            text: "Bạn có chắc chắn muốn xóa",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Xóa",
+            cancelButtonText: "Hủy",
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '@Url.Action("RemoveFavoriteAjax", "User")',
+                    type: 'POST',
+                    data: { id: favoriteId, , type = "favorite" },
+                    success: function (response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: "success",
+                                text: "Đã xóa tin!",
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                            $('#favorite-' + favoriteId).fadeOut(300, function () {
+                                $(this).remove();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: "error",
+                                text: response.message,
+                                showConfirmButton: true
+                            });
+                        }
+                    },
+                    error: function () {
+                        Swal.fire({
+                            icon: "error",
+                            text: "Xảy ra lỗi khi kết nối máy chủ.",
+                            showConfirmButton: true
+                        });
+                    }
+                });
+            }
+        });
+    });
+});
+</script>
+}
+<div class="container mt-4" style="margin-bottom:347px">
+    <h2 class="mb-4">Tin đăng yêu thích</h2>
+    @if (Model != null && Model.Any())
+    {
+        foreach (var item in Model)
+        {
+            var firstImage = item.Listing.Images?.FirstOrDefault()?.ImageURL;
+            var imagePath = string.IsNullOrEmpty(firstImage)
+                ? Url.Content("~/Contents/image/no_image.png")
+                : firstImage;
+
+            <div class="position-relative mb-3" id="favorite-@item.Id">
+                <a href="javascript:void(0);"
+                   class="position-absolute top-0 end-0 m-2 text-danger btn-remove-favorite"
+                   style="font-size: 1.5rem; z-index: 10;"
+                   data-id="@item.Id"
+                   onclick="event.stopPropagation(); event.preventDefault();">
+                    <i class="fas fa-heart"></i>
+                </a>
+                <a href="@Url.RouteUrl("FriendlyDetail", new { slug = ToSlug(item.Listing.Title), encryptedId = IdProtector.EncryptId(item.Listing.Id) })"
+                   class="text-decoration-none text-dark" target="_blank" onclick="openFullscreen(event, this.href)">
+                    <div class="row align-items-center border rounded p-2">
+                        <div class="col-md-3">
+                            <img src="@imagePath" class="img-fluid rounded" style="height: 150px; object-fit: cover;" alt="Ảnh tin">
+                        </div>
+                        <div class="col-md-9">
+                            <h5 class="mb-1">@item.Listing.Title</h5>
+                            <p class="text-danger fw-bold mb-1">@String.Format("{0:N0} đ", item.Listing.Price)</p>
+                            <p class="text-muted mb-0">@item.Listing.Location</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="alert alert-info">Bạn chưa lưu tin đăng nào.</div>
+    }
+</div>

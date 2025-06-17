@@ -1,0 +1,435 @@
+﻿@model PagedList.IPagedList<Website_Mua_Ban_Rao_Vat.Models.Banner>
+@using PagedList.Mvc;
+@{
+    ViewBag.Title = "Quản lý Banner";
+}
+<style>
+    img.image-show:hover {
+        transform: scale(1.05);
+    }
+
+    .modal-img {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        padding-top: 60px;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.8);
+    }
+
+    .modal-img-content {
+        margin: auto;
+        display: block;
+        max-width: 90%;
+        max-height: 90%;
+    }
+
+    .modal-img-close {
+        position: absolute;
+        top: 20px;
+        right: 35px;
+        color: #fff;
+        font-size: 40px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .pagination li a {
+        class: page-link;
+        display: block;
+        padding: 0.5rem 0.75rem;
+        color: #007bff;
+        text-decoration: none;
+        background-color: #fff;
+        border: 1px solid #dee2e6;
+        margin-left: -1px;
+    }
+
+    .pagination li.active a {
+        z-index: 1;
+        color: #fff;
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+    .pagination li.disabled a {
+        color: #6c757d;
+        pointer-events: none;
+        background-color: #fff;
+        border-color: #dee2e6;
+    }
+</style>
+<h2 class="mb-4">🎯 Quản lý Banner</h2>
+
+<!-- Form thêm banner -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">Thêm banner mới</div>
+    <div class="card-body">
+        @using (Html.BeginForm("Create", "BannerAdmin", FormMethod.Post, new { enctype = "multipart/form-data" }))
+        {
+            <div class="mb-3">
+                <label for="Link" class="form-label">🔗 Link</label>
+                <input type="text" name="Link" maxlength="255" class="form-control" placeholder="vd: uudai.com" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">🖼 Hình ảnh</label>
+                <input type="file" name="ImageFile" class="form-control" accept="image/*" onchange="previewCreateImage(event)" required />
+                <img id="preview" class="mt-3 rounded shadow-sm image-show" style="cursor: pointer; max-height: 200px; display: none;" onclick="showModal(this.src)" />
+            </div>
+
+            <button type="submit" class="btn btn-success" id="createButton">➕ Thêm banner</button>
+        }
+    </div>
+</div>
+<div class="card shadow-sm">
+    <div class="m-3 px-3">
+        @using (Html.BeginForm("Index", "BannerAdmin", FormMethod.Get))
+        {
+            <div class="row g-2 align-items-center mb-3">
+                <div class="col-md-6">
+                    <input type="text" name="searchString" value="@ViewBag.CurrentFilter" class="form-control" placeholder="🔍 Tìm banner theo Link..." />
+                </div>
+                <div class="col-md-3">
+                    <select name="sort" class="form-select">
+                        <option value="asc" @(Request["sort"] == "asc" ? "selected" : "")>Cũ nhất</option>
+                        <option value="desc" @(Request["sort"] == "desc" ? "selected" : "")>Mới nhất</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-outline-primary w-100">Tìm kiếm/Lọc</button>
+                </div>
+            </div>
+        }
+
+    </div>
+    <div class="card-header bg-dark text-white">📋 Danh sách Banner</div>
+    <div class="card-body">
+        <table class="table table-bordered table-hover">
+            <thead class="table-secondary">
+                <tr>
+                    <th>Thứ tự</th>
+                    <th>Hình ảnh</th>
+                    <th>Link</th>                                                                                                                                                
+                    <th>Tạo lúc</th>                                                                                                                                                
+                    <th>Tạo bởi</th>                                                                                                                                                
+                    <th>Sửa lúc</th>                                                                                                                                                
+                    <th>Sửa bởi</th>                                                                                                                                                
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="sortableBanner">
+                @foreach (var item in Model)
+                {
+                    @Html.AntiForgeryToken()
+                <tr data-id="@item.Id">
+                    <td style="width:100px">
+                        <select class="form-select order-select" data-id="@item.Id" data-current="@item.Orders">
+                            @for (int i = 1; i <= Model.Count(); i++)
+                            {
+                                if (i == item.Orders)
+                                {
+                                    <option value="@i" selected disabled>@i</option>
+                                }
+                                else
+                                {
+                                    <option value="@i">@i</option>
+                                }
+                            }
+                        </select>
+                    </td>
+
+                    <td><img src="@Url.Content(item.Image)" style="height: 100px; cursor: pointer;" class="rounded shadow-sm image-show" onclick="showModal(this.src)" /></td>
+                    <td><a href="@item.Link" target="_blank">@item.Link</a></td>
+                    <td>@(item.CreatedAt.HasValue ? item.CreatedAt.Value.ToString("dd/MM/yyyy HH:mm") : "Không")</td>
+                    <td>@item.User.FullName</td>
+                    <td>@(item.UpdatedAt.HasValue ? item.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm") : "Không")</td>
+                    <td>@(item.UpdatedBy.HasValue ? item.User1.FullName : "Không" )</td>
+                    <td style="width:150px">
+                        @if (item.Status == true)
+                        {
+                            <p class="bg-success text-center">
+                                <span class="text-light m-2">Hoạt động</span>
+                            </p>
+                        }
+                        else
+                        {
+                            <p class="bg-danger text-center">
+                                <span class="text-light m-2">Ngưng</span>
+                            </p>
+                        }
+                    </td>
+                    <td style="width:100px">
+                        @if (item.Status == true)
+                        {
+                            <button class="btn btn-danger mb-2" onclick="changeStatus(@item.Id, false)">Khóa</button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-success mb-2" onclick="changeStatus(@item.Id, true)">Mở khóa</button>
+                        }
+                        
+                        <button type="button" class="btn btn-info mb-2" onclick="openEditModal('@item.Id', '@item.Link', '@Url.Content(item.Image)')">
+                            <i class="bi bi-pencil-square"></i> Sửa
+                        </button>
+                        
+                        <button class="btn btn-danger delete-btn" data-id="@item.Id" id="delete-btn">🗑 Xoá</button>
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="d-flex justify-content-center mt-4">
+            @Html.PagedListPager(Model, page => Url.Action("Index", new
+       {
+           page,
+           searchString = ViewBag.CurrentFilter,
+            }), new PagedListRenderOptions
+       {
+           MaximumPageNumbersToDisplay = 5,
+           UlElementClasses = new[] { "pagination", "pagination-lg", "justify-content-center" },
+           LiElementClasses = new[] { "page-item" },
+
+           DisplayLinkToFirstPage = PagedListDisplayMode.Always,
+           DisplayLinkToLastPage = PagedListDisplayMode.Always,
+           DisplayLinkToPreviousPage = PagedListDisplayMode.Always,
+           DisplayLinkToNextPage = PagedListDisplayMode.Always,
+           DisplayLinkToIndividualPages = true,
+
+           LinkToPreviousPageFormat = "«",
+           LinkToNextPageFormat = "»",
+           LinkToFirstPageFormat = "««",
+           LinkToLastPageFormat = "»»"
+       })
+
+        </div>
+    </div>
+</div>
+<!-- Modal sửa banner -->
+<div class="modal fade" id="editBannerModal" tabindex="-1" aria-labelledby="editBannerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editForm" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editBannerModalLabel">📝 Sửa Banner</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editId" name="Id" />
+
+                    <div class="mb-3">
+                        <label class="form-label">🔗 Link</label>
+                        <input type="text" name="Link" id="editLink" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">🖼 Hình ảnh mới (nếu muốn thay)</label>
+                        <input type="file" name="ImageFile" class="form-control" accept="image/*" onchange="previewEditImage(event)" />
+                        <img id="editPreview" class="mt-3 rounded shadow-sm image-show" style="max-height: 200px; cursor: pointer;" onclick="showModal(this.src)" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary" id="saveButton">💾 Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div id="imgModal" class="modal-img" onclick="hideModal()">
+    <span class="modal-img-close" onclick="hideModal()">&times;</span>
+    <img class="modal-img-content" id="modalImage" />
+</div>
+
+@section scripts {
+    <script>
+         $(document).on("change", ".order-select", function () {
+    var id = $(this).data("id");
+    var newOrder = parseInt($(this).val());
+    var currentOrder = parseInt($(this).data("current"));
+    var token = $('input[name="__RequestVerificationToken"]').val();
+
+    if (newOrder === currentOrder) return;
+
+    $.ajax({
+        url: "/Admin/BannerAdmin/ChangeOrder",
+        type: "POST",
+        data: {
+            __RequestVerificationToken: token,
+            Id: id,
+            NewOrder: newOrder
+        },
+        success: function (response) {
+            if (response.success) {
+                location.reload();
+            } else {
+                Swal.fire("Lỗi", response.message, "error");
+            }
+        },
+        error: function () {
+            Swal.fire("Lỗi", "Không thể thay đổi thứ tự.", "error");
+        }
+    });
+});
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.querySelector("form");
+            const submitBtn = document.getElementById("createButton");
+            form.addEventListener("submit", function () {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
+            });
+        });
+        function showModal(src) {
+            Swal.fire({
+                imageUrl: src,
+                imageAlt: "Ảnh phóng to",
+                showConfirmButton: false,
+                showCloseButton: true
+            });
+        }
+        $(document).on("click", ".delete-btn", function () {
+            var id = $(this).data("id");
+            var row = $(this).closest("tr");
+            const deleteBtn = document.getElementById("delete-btn");
+            Swal.fire({
+                title: "Bạn có chắc muốn xoá?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Xoá",
+                cancelButtonText: "Huỷ"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    deleteBtn.disabled = true
+                    $.post("/Admin/BannerAdmin/Delete", { id: id }, function () {
+                        Swal.fire("Đã xoá!", "", "success");
+                        row.fadeOut();
+                        deleteBtn.disabled = false
+                    });
+                }
+            });
+        });
+        function previewCreateImage(event) {
+            var reader = new FileReader();
+            reader.onload = function () {
+                var output = document.getElementById("preview");
+                output.src = reader.result;
+                output.style.display = "block";
+            };
+            if (event.target.files[0]) {
+                reader.readAsDataURL(event.target.files[0]);
+            }
+        }
+
+        function previewEditImage(event) {
+            var reader = new FileReader();
+            reader.onload = function () {
+                var output = document.getElementById("editPreview");
+                output.src = reader.result;
+                output.style.display = "block";
+            };
+            if (event.target.files[0]) {
+                reader.readAsDataURL(event.target.files[0]);
+            }
+        }
+        function changeStatus(id, status) {
+            const action = status ? 'On' : 'Off';
+            const confirmText = status ? 'Bạn có chắc chắn muốn bật banner này?' : 'Bạn có chắc chắn muốn tắt banner này?';
+            const successText = status ? 'Banner đã hoạt động!' : 'Banner đã ngưng hoạt động!';
+
+            Swal.fire({
+                title: 'Xác nhận',
+                html: confirmText,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Xác nhận',
+                cancelButtonText: 'Hủy',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post('/BannerAdmin/' + action, { id: id }, function (data) {
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Thành công',
+                                text: data.message,
+                                timer: 1200,
+                                showConfirmButton: false
+                            }).then(() => location.reload());
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Lỗi',
+                                text: data.message
+                            });
+                        }
+                    });
+                }
+            });
+        }
+        function openEditModal(id, link, imageUrl) {
+            document.getElementById('editId').value = id;
+            document.getElementById('editLink').value = link;
+            document.getElementById('editPreview').src = imageUrl;
+
+            var preview = document.getElementById('editPreview');
+            preview.style.display = 'block';
+
+            var modal = new bootstrap.Modal(document.getElementById('editBannerModal'));
+            modal.show();
+        }
+         document.getElementById("editForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const form = e.target;
+        const formData = new FormData(form);
+             const saveButton = document.getElementById("saveButton");
+             saveButton.disabled = true;
+             const originalText = saveButton.innerHTML;
+             saveButton.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
+
+        fetch('@Url.Action("Edit", "BannerAdmin")', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'RequestVerificationToken': form.querySelector('input[name="__RequestVerificationToken"]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Thành công!',
+                    text: data.message,
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    location.reload();
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi',
+                    text: data.message
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Lỗi:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi kết nối',
+                text: 'Không thể gửi dữ liệu đến server.'
+            });
+        }).finally(() => {
+            saveButton.disabled = false;
+            saveButton.innerHTML = originalText;
+        });
+    });
+    </script>
+}

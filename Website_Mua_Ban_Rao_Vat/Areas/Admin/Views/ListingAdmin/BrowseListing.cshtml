@@ -1,0 +1,206 @@
+﻿@using PagedList;
+@using PagedList.Mvc;
+@model List<Website_Mua_Ban_Rao_Vat.Models.Listing>
+@section scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function refreshListings() {
+            $.get("/Admin/ListingAdmin/GetPendingListings", function (data) {
+                let tbody = $("table tbody");
+                tbody.empty();
+                data.forEach(item => {
+                    let imagesHtml = item.Images.map(img =>
+                        `<img src="${img}" alt="Image" width="80" onclick="showModal('${img}')" style="margin-right:5px;" />`
+                    ).join("");
+
+                    let row = `
+                                    <tr>
+                                        <td>${item.Title}</td>
+                                        <td><div class="image-scroll">${imagesHtml}</div></td>
+                                        <td>${item.Description}</td>
+                                        <td><a href="https://www.google.com/maps?q=${encodeURIComponent(item.Location)}" target="_blank">${item.Location}</a></td>
+                                        <td>${item.CreatedAt }</td>
+                                        <td>${item.Category}</td>
+                                        <td>${item.User}</td>
+                                        <td>
+                                            <button class="btn btn-success btn-sm me-1 approve-btn" data-id="${item.Id}">✔ Duyệt</button>
+                                            <p></p>
+                                            <button class="btn btn-danger btn-sm delete-btn" data-id="${item.Id}">🗑 Xoá</button>
+                                        </td>
+                                    </tr>
+                                `;
+
+                    tbody.append(row);
+                });
+            });
+        }
+        setInterval(refreshListings, 10000);
+        refreshListings();
+        $(document).on("click", ".approve-btn", function () {
+            var id = $(this).data("id");
+            var row = $(this).closest("tr");
+
+            Swal.fire({
+                title: "Xác nhận duyệt bài?",
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonText: "Duyệt",
+                cancelButtonText: "Huỷ"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post("/Admin/ListingAdmin/Browse", { id: id }, function () {
+                        Swal.fire("Đã duyệt!", "", "success");
+                        row.fadeOut();
+                    });
+                }
+            });
+        });
+
+        $(document).on("click", ".delete-btn", function () {
+            var id = $(this).data("id");
+            var row = $(this).closest("tr");
+
+            Swal.fire({
+                title: "Bạn có chắc muốn xoá?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Xoá",
+                cancelButtonText: "Huỷ"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post("/ListingAdmin/Delete", { id: id }, function () {
+                        Swal.fire("Đã xoá!", "", "success");
+                        row.fadeOut();
+                    });
+                }
+            });
+        });
+        function showModal(src) {
+            Swal.fire({
+                imageUrl: src,
+                imageAlt: "Ảnh phóng to",
+                showConfirmButton: false,
+                showCloseButton: true
+            });
+        }
+    </script>
+}
+
+@{
+    ViewBag.Title = "Duyệt tin";
+}
+
+<style>
+    .detail-scroll {
+        max-height: 100px;
+        overflow-y: auto;
+        word-break: break-word;
+        white-space: normal;
+    }
+    .image-scroll {
+        display: flex;
+        overflow-x: auto;
+        max-width: 300px;
+    }
+
+        .image-scroll img {
+            margin-right: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+            .image-scroll img:hover {
+                transform: scale(1.05);
+            }
+
+    .modal-img {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        padding-top: 60px;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.8);
+    }
+
+    .modal-img-content {
+        margin: auto;
+        display: block;
+        max-width: 90%;
+        max-height: 90%;
+    }
+
+    .modal-img-close {
+        position: absolute;
+        top: 20px;
+        right: 35px;
+        color: #fff;
+        font-size: 40px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+</style>
+
+<h2 class="mb-4">📋 Các bài chờ duyệt</h2>
+<table class="table table-bordered table-striped table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Tiêu đề</th>
+            <th>Hình ảnh</th>
+            <th>Chi tiết</th>
+            <th>Địa chỉ</th>
+            <th>Tạo lúc</th>
+            <th>Danh mục</th>
+            <th>Người đăng</th>
+            <th>Thao tác</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Title</td>
+                <td>
+                    <div class="image-scroll">
+                        @foreach (var img in item.Images)
+                        {
+                            <img src="@Url.Content(img.ImageURL)" alt="Image" width="80" onclick="showModal(this.src)" />
+                        }
+                    </div>
+                </td>
+                <td>
+                    <div class="detail-scroll">
+                        @Html.Raw(item.Description)
+                    </div>
+                </td>
+                <td>
+                    <a href="https://www.google.com/maps?q=@Uri.EscapeDataString(item.Location)" target="_blank">
+                        @item.Location
+                    </a>
+                </td>
+                @{
+                    var match = System.Text.RegularExpressions.Regex.Match(item.CreatedAt.ToString(), @"\d+");
+                    var ticks = match.Success ? Convert.ToInt64(match.Value) : 0;
+                    var date = new DateTime(1970, 1, 1).AddMilliseconds(ticks).ToLocalTime();
+                }
+                <td>@date</td>
+                <td>@item.Category.Name</td>
+                <td>@item.User.FullName</td>
+                <td>
+                    <button class="btn btn-success btn-sm me-1 approve-btn" data-id="@item.Id">✔ Duyệt</button>
+                    <p></p>
+                    <button class="btn btn-danger btn-sm delete-btn" data-id="@item.Id">🗑 Xoá</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div id="imgModal" class="modal-img" onclick="hideModal()">
+    <span class="modal-img-close" onclick="hideModal()">&times;</span>
+    <img class="modal-img-content" id="modalImage" />
+</div>

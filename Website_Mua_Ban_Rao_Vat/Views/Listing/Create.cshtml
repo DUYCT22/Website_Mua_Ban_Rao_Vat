@@ -1,0 +1,266 @@
+﻿@model Website_Mua_Ban_Rao_Vat.Models.Listing
+@{
+    ViewBag.Title = "Đăng tin";
+}
+@section Scripts {
+    <script src="https://cdn.ckeditor.com/4.20.2/standard/ckeditor.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+             $('#parentCategoryDropdown').change(function () {
+                var parentId = $(this).val();
+                if (parentId) {
+                    $.ajax({
+                        url: '@Url.Action("GetSubCategories", "Listing")',
+                        type: 'GET',
+                        data: { parentId: parentId },
+                        success: function (data) {
+                            $('#subCategoryDropdown').empty();
+                            $('#subCategoryDropdown').append($('<option></option>').val("").text("-- Chọn danh mục con --"));
+                            $.each(data, function (key, entry) {
+                                $('#subCategoryDropdown').append($('<option></option>').val(entry.Id).text(entry.Name));
+                            });
+                        },
+                        error: function () {
+                            console.log("Error loading subcategories.");
+                        }
+                    });
+                } else {
+                    $('#subCategoryDropdown').empty();
+                    $('#subCategoryDropdown').append($('<option></option>').val("").text("-- Chọn danh mục con --"));
+                }
+            });
+            var descriptionField = $('[name="Description"]');
+            if (descriptionField.length) {
+                CKEDITOR.replace(descriptionField.attr('id'), {
+                    allowedContent: 'p b i u ul ol li a[!href]; br',
+                    disallowedContent: 'script; *[on*]',
+                });
+            }
+            $('form').on('submit', function () {
+                $(this).find('input[type="submit"]').prop('disabled', true);
+                $('#spinner').show();
+            });
+        });
+
+
+        function previewImages() {
+            var preview = document.querySelector('#imagePreview');
+            preview.innerHTML = '';
+            if (this.files) {
+                [].forEach.call(this.files, readAndPreview);
+            }
+
+            function readAndPreview(file) {
+                if (!/\.(jpe?g|png|gif)$/i.test(file.name)) return;
+                var reader = new FileReader();
+                reader.addEventListener("load", function () {
+                    var img = document.createElement("img");
+                    img.classList.add("img-preview");
+                    img.src = this.result;
+                    preview.appendChild(img);
+                });
+                reader.readAsDataURL(file);
+            }
+        }
+
+        document.querySelector('#Images').addEventListener("change", previewImages);
+        document.addEventListener("DOMContentLoaded", function () {
+            fetchProvinces();
+        });
+        function fetchProvinces() {
+            fetch('https://esgoo.net/api-tinhthanh/1/0.htm')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error === 0 && data.data) {
+                        populateDropdown('provincesSelect', data.data, 'id', 'name');
+                        setupChangeListeners();
+                    } else {
+                        console.error('Error fetching provinces:', data.error_text);
+                    }
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
+        function fetchDistricts(provinceId) {
+            fetch(`https://esgoo.net/api-tinhthanh/2/${provinceId}.htm`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error === 0 && data.data) {
+                        populateDropdown('districtsSelect', data.data, 'id', 'name');
+                        document.getElementById('wardsSelect').innerHTML = '<option value="">Chọn phường xã</option>';
+                        updateFullAddress();
+                    } else {
+                        console.error('Error fetching districts:', data.error_text);
+                    }
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
+        function fetchWards(districtId) {
+            fetch(`https://esgoo.net/api-tinhthanh/3/${districtId}.htm`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error === 0 && data.data) {
+                        populateDropdown('wardsSelect', data.data, 'id', 'name');
+                        updateFullAddress();
+                    } else {
+                        console.error('Error fetching wards:', data.error_text);
+                    }
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
+        function populateDropdown(selectId, data, valueField, textField) {
+            const select = document.getElementById(selectId);
+            select.innerHTML = '<option value="">Chọn</option>';
+            data.forEach(item => {
+                if (item[valueField] && item[textField]) {
+                    const option = document.createElement('option');
+                    option.value = item[valueField];
+                    option.textContent = item[textField];
+                    select.appendChild(option);
+                }
+            });
+        }
+        function setupChangeListeners() {
+            document.getElementById('provincesSelect').addEventListener('change', function () {
+                const provinceId = this.value;
+                if (provinceId) {
+                    fetchDistricts(provinceId);
+                } else {
+                    document.getElementById('districtsSelect').innerHTML = '<option value="">Chọn quận huyện</option>';
+                    document.getElementById('wardsSelect').innerHTML = '<option value="">Chọn phường xã</option>';
+                    updateFullAddress();
+                }
+            });
+
+            document.getElementById('districtsSelect').addEventListener('change', function () {
+                const districtId = this.value;
+                if (districtId) {
+                    fetchWards(districtId);
+                } else {
+                    document.getElementById('wardsSelect').innerHTML = '<option value="">Chọn phường xã</option>';
+                    updateFullAddress();
+                }
+            });
+
+            document.getElementById('wardsSelect').addEventListener('change', updateFullAddress);
+            document.getElementById('houseNumber').addEventListener('input', updateFullAddress);
+        }
+        function updateFullAddress() {
+            const province = document.getElementById('provincesSelect').selectedOptions[0]?.text || '';
+            const district = document.getElementById('districtsSelect').selectedOptions[0]?.text || '';
+            const ward = document.getElementById('wardsSelect').selectedOptions[0]?.text || '';
+            const houseNumber = document.getElementById('houseNumber').value || '';
+
+            const fullAddress = [houseNumber, ward, district, province]
+                .filter(part => part)
+                .join(', ');
+
+            document.getElementById('fullAddress').value = fullAddress;
+        }
+    </script>
+    <style>
+        .img-preview {
+            height: 100px;
+            width: 100px;
+            object-fit: cover;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+}
+
+<h2 class="m-5">Đăng tin <span class="text-danger text-sm-start" style="font-size:15px">Tin tốt không cho phép chỉnh sửa <strong>Tiêu đề/Chi tiết/Địa chỉ/Hình ảnh </strong> nên bạn hãy kiểm tra kỹ trước khi đăng</span></h2>
+@using (Html.BeginForm("Create", "Listing", FormMethod.Post, new { enctype = "multipart/form-data" }))
+{
+    @Html.AntiForgeryToken()
+    <div class="form-horizontal m-5">
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        <div class="form-group">
+            <label class="form-label fw-bold">Chọn danh mục</label>
+            <div class="col-md-10">
+                <div class="row">
+                    <div class="col-md-3">
+                        @Html.DropDownList("ParentCategoryId", (SelectList)ViewBag.ParentCategories, "-- Chọn danh mục cha --", new { @class = "form-control", id = "parentCategoryDropdown" })
+                    </div>
+                    <div class="col-md-5">
+                        @Html.DropDownListFor(m => m.CategoryId, (SelectList)ViewBag.SubCategories, "-- Chọn danh mục con --", new { @class = "form-control", required = "true", id = "subCategoryDropdown" })
+                        @Html.ValidationMessageFor(m => m.CategoryId, "", new { @class = "text-danger" })
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label fw-bold">Tiêu đề</label>
+            <div class="row">
+                <div class="col-md-12">
+                    @Html.TextBoxFor(m => m.Title, new { @class = "form-control", maxlength = 255, required = "true" })
+                    @Html.ValidationMessageFor(m => m.Title, "", new { @class = "text-danger" })
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label fw-bold">Chi tiết</label>
+            <div class="col-md-10">
+                @Html.TextAreaFor(m => m.Description, new { @class = "form-control", rows = 10, id = "Description", required = "true" })
+                @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger" })
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label fw-bold">Giá</label>
+            <div class="col-md-10 input-group">
+                @Html.TextBoxFor(m => m.Price, new { @class = "form-control", type = "number", id = "priceInput", min = "0", required = "true" })
+                @Html.ValidationMessageFor(m => m.Price, "", new { @class = "text-danger" })
+            </div>
+        </div>
+        <div class="form-group mb-4">
+            <label class="form-label fw-bold">Địa chỉ</label>
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <select id="provincesSelect" name="province" class="form-select" required>
+                        <option value="">Tỉnh/Thành</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select id="districtsSelect" name="district" class="form-select" required>
+                        <option value="">Quận/Huyện</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select id="wardsSelect" name="ward" class="form-select" required>
+                        <option value="">Phường/Xã</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input type="text" id="houseNumber" name="houseNumber" class="form-control" placeholder="Số nhà, tên đường" required />
+                </div>
+            </div>
+            <input type="hidden" name="Location" id="fullAddress" />
+            <div class="text-danger mt-1">
+                @Html.ValidationMessageFor(m => m.Location, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+
+
+        <div class="form-group">
+            <label class="control-label col-md-2">Hình ảnh</label>
+            <div class="col-md-10">
+                <input type="file" name="Images" id="Images" multiple accept="image/*" class="form-control" required />
+                <div id="imagePreview" class="mt-2"></div>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Đăng tin" class="btn btn-primary" />
+            </div>
+        </div>
+        <div id="spinner" style="display:none; text-align:center; margin-top:20px;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Đang xử lý...</span>
+            </div>
+            <p>Đang xử lý, vui lòng đợi...</p>
+        </div>
+    </div>
+}

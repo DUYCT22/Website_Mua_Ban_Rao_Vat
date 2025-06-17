@@ -1,0 +1,204 @@
+﻿@model Website_Mua_Ban_Rao_Vat.Models.User
+@{
+    ViewBag.Title = "Đăng ký";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Đăng ký</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+        body {
+            background-color: #FFFF99;
+        }
+
+        input.form-control {
+            padding-right: 2.5rem;
+        }
+
+        .avatar-preview {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 10px;
+        }
+    </style>
+    <script>
+    $(document).ready(function () {
+        $("#registerForm").on("submit", function (e) {
+            e.preventDefault();
+
+            const email = $("#Email").val();
+            const password = $("#Password").val();
+            const confirmPassword = $("#ConfirmPassword").val();
+            const gmailRegex = /^[a-zA-Z0-9._%+-]+@@gmail\.com$/;
+            if (!gmailRegex.test(email)) {
+                Swal.fire({
+                    icon: 'warning',
+                    text: 'Vui lòng nhập email đúng định dạng Gmail (ví dụ: abc@gmail.com).'
+                });
+                return;
+            }
+            if (password !== confirmPassword) {
+                Swal.fire({
+                    icon: 'warning',
+                    text: 'Mật khẩu và xác nhận mật khẩu không khớp.'
+                });
+                return;
+            }
+            const form = $(this)[0];
+            const formData = new FormData(form);
+
+            $("#submitBtn").prop("disabled", true).html('<span class="spinner-border spinner-border-sm"></span>');
+            $("#spinner").fadeIn();
+
+            $.ajax({
+                url: '@Url.Action("Register", "Account")',
+                method: "POST",
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function (res) {
+                    if (res.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            text: res.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.href = res.redirectUrl || "/";
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            text: res.message
+                        });
+                    }
+                },
+                error: function () {
+                    Swal.fire({
+                        icon: 'error',
+                        text: 'Đăng ký thất bại. Vui lòng thử lại.'
+                    });
+                },
+                complete: function () {
+                    $("#submitBtn").prop("disabled", false).html('Đăng ký');
+                    $("#spinner").fadeOut();
+                }
+            });
+        });
+        $(document).on("click", ".toggle-password", function () {
+            const input = $($(this).attr("toggle"));
+            const isPassword = input.attr("type") === "password";
+            input.attr("type", isPassword ? "text" : "password");
+            $(this).toggleClass("fa-eye fa-eye-slash");
+        });
+    });
+    </script>
+
+
+</head>
+<body>
+    <div class="container py-5">
+        <img class="img-fluid" src="~/Contents/image/Logo.png" />
+        <h2 class="text-center mb-4">Đăng ký</h2>
+
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow p-4">
+                    @using (Html.BeginForm("", "", FormMethod.Post, new { id = "registerForm", enctype = "multipart/form-data" }))
+                    {
+                        <div class="mb-3">
+                            <label for="FullName" class="form-label">Họ và Tên</label>
+                            @Html.TextBoxFor(m => m.FullName, new { @class = "form-control", maxlength = "99", required = "required" })
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="Email" class="form-label">Email</label>
+                            @Html.TextBoxFor(m => m.Email, new
+                            {
+                                @class = "form-control",
+                                id = "Email",
+                                required = "required",
+                                pattern = "^[a-zA-Z0-9._%+-]+@gmail\\.com$",
+                                title = "Vui lòng nhập đúng định dạng email Gmail"
+                            })
+
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="Phone" class="form-label">Số điện thoại</label>
+                            @Html.TextBoxFor(m => m.Phone, new
+                            {
+                                @class = "form-control",
+                                maxlength = "11",
+                                pattern = "\\d*",
+                                title = "Chỉ được nhập số",
+                                required = "required"
+                            })
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="LoginName" class="form-label">Tên đăng nhập</label>
+                            @Html.TextBoxFor(m => m.LoginName, new { @class = "form-control", maxlength = "50", required = "required" })
+                        </div>
+
+                        <div class="mb-3 position-relative">
+                            <label for="Password" class="form-label">Mật khẩu</label>
+                            <input type="password" id="Password" name="Password" class="form-control" required />
+                            <i class="fa fa-eye position-absolute toggle-password" toggle="#Password" style="top: 40px; right: 15px; cursor: pointer;"></i>
+                        </div>
+
+                        <div class="mb-3 position-relative">
+                            <label for="ConfirmPassword" class="form-label">Xác nhận mật khẩu</label>
+                            <input type="password" id="ConfirmPassword" name="ConfirmPassword" class="form-control" required />
+                            <i class="fa fa-eye position-absolute toggle-password" toggle="#ConfirmPassword" style="top: 40px; right: 15px; cursor: pointer;"></i>
+                        </div>
+
+
+                        <div class="mb-3">
+                            <label for="Avatar" class="form-label">Hình đại diện</label>
+                            <input type="file" name="Avatar" id="Avatar" accept="image/*" class="form-control" onchange="previewImage(event)" />
+                            <img id="avatarPreview" class="avatar-preview mt-2 d-block" style="display:none;" />
+                        </div>
+                        <div class="form-check mt-3 d-flex justify-content-center align-items-center text-center">
+                            <input class="form-check-input me-2" type="checkbox" id="termsCheckbox" name="AcceptTerms" required>
+                            <label class="form-check-label" for="termsCheckbox">
+                                Tôi đồng ý với <a href="@Url.RouteUrl("FriendlyTerms")" target="_blank">Điều khoản sử dụng</a>
+                            </label>
+                        </div>
+
+                        <button type="submit" id="submitBtn" class="btn btn-primary w-100">Đăng ký</button>
+                    }
+                </div>
+            </div>
+        </div>
+        <div id="spinner" style="display:none; text-align:center; margin-top:20px;">
+            <div class="spinner-border text-primary" role="status">
+            </div>
+            <p>Đang xử lý, vui lòng đợi...</p>
+        </div>
+    </div>
+
+    <script>
+
+        function previewImage(event) {
+            const input = event.target;
+            const reader = new FileReader();
+            reader.onload = function () {
+                const img = document.getElementById('avatarPreview');
+                img.src = reader.result;
+                img.style.display = 'block';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    </script>
+</body>
+</html>

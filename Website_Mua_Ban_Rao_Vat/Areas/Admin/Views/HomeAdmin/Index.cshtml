@@ -1,0 +1,166 @@
+﻿@{
+    ViewBag.Title = "Trang chủ";
+}
+
+<div class="container-fluid mt-4">
+    <!-- Các chỉ số thống kê -->
+    <div class="row">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card text-white bg-primary shadow">
+                <div class="card-body">
+                    <h5 class="card-title">📄 Tổng bài đăng</h5>
+                    <p class="card-text fs-4">@ViewBag.TotalListings</p>
+                </div>
+            </div>
+        </div>
+        <a class="col-lg-3 col-md-6 mb-3" style="text-decoration:none" href="@Url.Action("ListingSold","ListingAdmin")">
+            <div class="card text-white bg-secondary shadow">
+                <div class="card-body">
+                    <h5 class="card-title">✅ Bài đã bán</h5>
+                    <p class="card-text fs-4">@ViewBag.TotalSoldListings</p>
+                </div>
+            </div>
+        </a>
+        <a class="col-lg-3 col-md-6 mb-3" style="text-decoration:none" href="@Url.Action("ListingHide","ListingAdmin")">
+            <div class="card text-white bg-dark shadow">
+                <div class="card-body">
+                    <h5 class="card-title">🙈 Bài bị ẩn</h5>
+                    <p class="card-text fs-4">@ViewBag.TotalHiddenListings</p>
+                </div>
+            </div>
+        </a>
+      
+        <a class="col-lg-3 col-md-6 mb-3" style="text-decoration:none" href="@Url.Action("BrowseListing","ListingAdmin")">
+            <div class="card text-white bg-warning shadow">
+                <div class="card-body">
+                    <h5 class="card-title">⏳ Bài chờ duyệt</h5>
+                    <p class="card-text fs-4">@ViewBag.PendingListings</p>
+                </div>
+            </div>
+        </a>
+       
+    </div>
+
+    <div class="row">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card text-white bg-info shadow">
+                <div class="card-body">
+                    <h5 class="card-title">📈 Tăng trưởng bài đăng</h5>
+                    <p class="card-text fs-4">@ViewBag.GrowthPost %</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card text-white bg-success shadow">
+                <div class="card-body">
+                    <h5 class="card-title">👤 Tăng trưởng user mới</h5>
+                    <p class="card-text fs-4">@ViewBag.GrowthUser %</p>
+                </div>
+            </div>
+        </div>
+        <a class="col-lg-3 col-md-6 mb-3" style="text-decoration:none" href="@Url.Action("Index","AccountAdmin")">
+            <div class="card text-white bg-success shadow">
+                <div class="card-body">
+                    <h5 class="card-title">👥 Người dùng</h5>
+                    <p class="card-text fs-4">@ViewBag.TotalUsers</p>
+                </div>
+            </div>
+        </a>
+        <a class="col-lg-3 col-md-6 mb-3" style="text-decoration:none" href="@Url.Action("Index","CategoryAdmin")">
+            <div class="card text-white bg-danger shadow">
+                <div class="card-body">
+                    <h5 class="card-title">📚 Danh mục</h5>
+                    <p class="card-text fs-4">@ViewBag.TotalCategories</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Biểu đồ -->
+    <div class="row mt-4">
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">🎯 Trạng thái bài đăng</div>
+                <div class="card-body">
+                    <canvas id="statusPieChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">📊 Bài đăng theo danh mục</div>
+                <div class="card-body">
+                    <canvas id="categoryChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">📈 Tăng trưởng bài đăng theo tháng</div>
+                <div class="card-body">
+                    <canvas id="growthAreaChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        $(document).ready(function () {
+            $.get('@Url.Action("GetListingStatusDistribution", "HomeAdmin")', function (data) {
+                new Chart(document.getElementById('statusPieChart'), {
+                    type: 'pie',
+                    data: {
+                        labels: ['Hiển thị', 'Ẩn', 'Chờ duyệt'],
+                        datasets: [{
+                            data: [data.Showing, data.Hidden, data.Pending],
+                            backgroundColor: ['#4caf50', '#f44336', '#ffc107']
+                        }]
+                    }
+                });
+            });
+            $.get('@Url.Action("GetMonthlyListingGrowth", "HomeAdmin")', function (data) {
+                const labels = data.map(d => `Tháng ${d.Month}`);
+                const counts = data.map(d => d.Count);
+                new Chart(document.getElementById('growthAreaChart'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Tăng trưởng bài đăng',
+                            data: counts,
+                            fill: true,
+                            backgroundColor: 'rgba(75,192,192,0.2)',
+                            borderColor: 'rgba(75,192,192,1)',
+                            tension: 0.4
+                        }]
+                    }
+                });
+            });
+            $.get('@Url.Action("GetListingStatsByCategory", "HomeAdmin")', function (data) {
+                const labels = data.map(x => x.CategoryName);
+                const counts = data.map(x => x.Count);
+                new Chart(document.getElementById('categoryChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Số bài đăng',
+                            data: counts,
+                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+}

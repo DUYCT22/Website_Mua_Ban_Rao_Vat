@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+ <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>
+      <Diagram DiagramId="71263e0dba804af48ae1f1fa461b7c28" Name="Diagram1" ZoomLevel="90">
+        <EntityTypeShape EntityType="Mua_Ban_Vao_VatModel.Banner" Width="1.5" PointX="1" PointY="3.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="Mua_Ban_Vao_VatModel.Category" Width="1.5" PointX="3.25" PointY="10.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="Mua_Ban_Vao_VatModel.Favorite" Width="1.5" PointX="3" PointY="7.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="Mua_Ban_Vao_VatModel.Follow" Width="1.5" PointX="5.375" PointY="11.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="Mua_Ban_Vao_VatModel.Image" Width="1.5" PointX="7.75" PointY="5.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="Mua_Ban_Vao_VatModel.Listing" Width="1.5" PointX="5.5" PointY="3.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="Mua_Ban_Vao_VatModel.Message" Width="1.5" PointX="3.125" PointY="3.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="Mua_Ban_Vao_VatModel.Notification" Width="1.5" PointX="5.25" PointY="7.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="Mua_Ban_Vao_VatModel.Rating" Width="1.5" PointX="7.5" PointY="8" IsExpanded="true" />
+        <EntityTypeShape EntityType="Mua_Ban_Vao_VatModel.User" Width="1.5" PointX="0.75" PointY="7.125" IsExpanded="true" />
+        <AssociationConnector Association="Mua_Ban_Vao_VatModel.FK__Categorie__Paren__3D5E1FD2" ManuallyRouted="false" />
+        <AssociationConnector Association="Mua_Ban_Vao_VatModel.FK__Listings__Catego__412EB0B6" ManuallyRouted="false" />
+        <AssociationConnector Association="Mua_Ban_Vao_VatModel.FK__Favorites__Listi__4E88ABD4" ManuallyRouted="false" />
+        <AssociationConnector Association="Mua_Ban_Vao_VatModel.FK__Favorites__UserI__4D94879B" ManuallyRouted="false" />
+        <AssociationConnector Association="Mua_Ban_Vao_VatModel.FK__Follows__Followe__5BE2A6F2" ManuallyRouted="false" />
+        <AssociationConnector Association="Mua_Ban_Vao_VatModel.FK__Follows__SellerI__5CD6CB2B" ManuallyRouted="false" />
+        <AssociationConnector Association="Mua_Ban_Vao_VatModel.FK__Images__ListingI__440B1D61" ManuallyRouted="false" />
+        <AssociationConnector Association="Mua_Ban_Vao_VatModel.FK__Listings__UserId__403A8C7D" ManuallyRouted="false" />
+        <AssociationConnector Association="Mua_Ban_Vao_VatModel.FK__Messages__Listin__4AB81AF0" ManuallyRouted="false" />
+        <AssociationConnector Association="Mua_Ban_Vao_VatModel.FK__Notificat__Listi__59063A47" ManuallyRouted="false" />
+        <AssociationConnector Association="Mua_Ban_Vao_VatModel.FK__Messages__Receiv__49C3F6B7" ManuallyRouted="false" />
+        <AssociationConnector Association="Mua_Ban_Vao_VatModel.FK__Messages__Sender__48CFD27E" ManuallyRouted="false" />
+        <AssociationConnector Association="Mua_Ban_Vao_VatModel.FK__Notificat__Relat__5812160E" ManuallyRouted="false" />
+        <AssociationConnector Association="Mua_Ban_Vao_VatModel.FK__Notificat__UserI__571DF1D5" ManuallyRouted="false" />
+        <AssociationConnector Association="Mua_Ban_Vao_VatModel.FK__Ratings__Reviewe__3A81B327" ManuallyRouted="false" />
+        <AssociationConnector Association="Mua_Ban_Vao_VatModel.FK__Ratings__UserId__398D8EEE" ManuallyRouted="false" />
+        <AssociationConnector Association="Mua_Ban_Vao_VatModel.FK_Banners_CreatedBy" />
+        <AssociationConnector Association="Mua_Ban_Vao_VatModel.FK_Banners_UpdatedBy" />
+        <AssociationConnector Association="Mua_Ban_Vao_VatModel.FK_Categoriess_CreatedBy" />
+        <AssociationConnector Association="Mua_Ban_Vao_VatModel.FK_Categoriess_UpdatedBy" />
+      </Diagram>
+    </edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>

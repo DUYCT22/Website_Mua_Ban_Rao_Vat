@@ -1,0 +1,55 @@
+﻿@{
+    ViewBag.Title = "Về chúng tôi";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title - Tin Tốt</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .about-section {
+            padding: 60px 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .about-header {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #0d6efd;
+        }
+
+        .logo-img {
+            max-width: 150px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="about-section text-center">
+            <img src="~/Contents/image/Logo.png" alt="Tin Tốt Logo" class="logo-img" />
+            <h1 class="about-header">Về chúng tôi</h1>
+            <p class="lead mt-3">
+                <strong>Tin Tốt</strong> là nền tảng mua bán và rao vặt trực tuyến tốt nhất, giúp kết nối người mua và người bán trên toàn quốc.
+            </p>
+            <p>
+                Với sứ mệnh tạo nên một thị trường trực tuyến minh bạch, an toàn và tiện lợi, chúng tôi luôn nỗ lực nâng cao trải nghiệm người dùng, cung cấp công cụ đăng tin nhanh chóng, phân loại thông minh và hệ thống đánh giá uy tín rõ ràng.
+            </p>
+            <p>
+                Tin Tốt hỗ trợ nhiều danh mục đa dạng như: đồ điện tử, thời trang, xe cộ, bất động sản, việc làm và nhiều lĩnh vực khác. Chúng tôi cam kết bảo mật thông tin, hỗ trợ khách hàng tận tình và không ngừng cải tiến để phục vụ bạn tốt hơn mỗi ngày.
+            </p>
+            <p class="text-muted mt-4">Cảm ơn bạn đã đồng hành cùng <strong>Tin Tốt</strong>!</p>
+        </div>
+    </div>
+</body>
+</html>

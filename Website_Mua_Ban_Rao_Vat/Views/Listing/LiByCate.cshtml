@@ -1,0 +1,193 @@
+﻿@model Website_Mua_Ban_Rao_Vat.Models.HomeModel
+@using Website_Mua_Ban_Rao_Vat.Models
+@{
+    ViewBag.Title = "Bài Đăng Theo Danh Mục";
+}
+@functions {
+    public string ToSlug(string str)
+    {
+        return str.ToLower()
+                  .Replace(" ", "-")
+                  .Replace("/", "")
+                  .Replace("(", "")
+                  .Replace(")", "")
+                  .Replace("+", "")
+                  .Replace(".", "")
+                  .Replace(",", "")
+                  .Replace("?", "")
+                  .Replace("!", "")
+                  .Replace(":", "")
+                  .Replace(";", "")
+                  .Replace("đ", "d")
+                  .Normalize(System.Text.NormalizationForm.FormD)
+                  .Where(c => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
+                  .Aggregate("", (s, c) => s + c)
+                  .Replace("--", "-");
+    }
+}
+<style>
+    @@media (max-width: 576px) {
+        .card-title {
+            font-size: 0.9rem;
+        }
+
+        .card-text {
+            font-size: 0.85rem;
+        }
+    }
+
+    .hover-zoom {
+        transition: transform 0.3s ease;
+    }
+
+        .hover-zoom:hover {
+            transform: scale(1.05);
+        }
+
+    .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease-in-out;
+    }
+</style>
+
+<script>
+    function openFullscreen(event, url) {
+        event.preventDefault();
+        const win = window.open(url, '_blank');
+
+        if (win) {
+            win.focus();
+            win.onload = () => {
+                const docElm = win.document.documentElement;
+                if (docElm.requestFullscreen) {
+                    docElm.requestFullscreen().catch(err => {
+                        console.error("Error attempting to enable full-screen mode:", err);
+                    });
+                } else if (docElm.mozRequestFullScreen) {
+                    docElm.mozRequestFullScreen();
+                } else if (docElm.webkitRequestFullscreen) {
+                    docElm.webkitRequestFullscreen();
+                } else if (docElm.msRequestFullscreen) {
+                    docElm.msRequestFullscreen();
+                }
+            };
+        } else {
+            alert("Trình duyệt đã chặn popup. Vui lòng cho phép để xem ở chế độ toàn màn hình.");
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        var myCarousel = document.querySelector('#demo');
+        var carousel = new bootstrap.Carousel(myCarousel, {
+            interval: 3000,
+            ride: 'carousel'
+        });
+        const loadBtn = document.getElementById("loadMoreBtn");
+
+        if (loadBtn) {
+            loadBtn.addEventListener("click", function () {
+                let page = parseInt(loadBtn.getAttribute("data-page")) + 1;
+                const pageSize = parseInt(loadBtn.getAttribute("data-pageSize"));
+                const total = parseInt(loadBtn.getAttribute("data-total"));
+                const slug = loadBtn.getAttribute("data-slug");
+                const encryptedId = loadBtn.getAttribute("data-encryptedid");
+                const sort = loadBtn.getAttribute("data-sort");
+
+                const url = `/Listing/LiByCate?slug=${slug}&encryptedId=${encryptedId}&sort=${sort}&page=${page}&pageSize=${pageSize}`;
+
+                fetch(url, {
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                })
+                    .then(res => res.text())
+                    .then(html => {
+                        document.getElementById("listingContainer").insertAdjacentHTML("beforeend", html);
+
+                        const loaded = page * pageSize;
+                        if (loaded >= total) {
+                            loadBtn.remove();
+                        } else {
+                            loadBtn.setAttribute("data-page", page);
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Lỗi tải thêm:", err);
+                    });
+            });
+        }
+    });
+</script>
+
+<main class="container mt-4" style="margin-bottom:auto">
+    @if (Model.Listing.Count != 0)
+    {
+        if (Model.Categories.Count == 0) { }
+        else
+        {
+            <div class="row text-center mb-5">
+                <h3 class="fw-bold mb-4">Danh mục</h3>
+                @foreach (var item in Model.Categories)
+                {
+
+                    <a class="col-6 col-md-2 mb-3"
+                       href="@Url.RouteUrl("FriendlyLiByCate", new { slug = ToSlug(item.Name), encryptedId = IdProtector.EncryptId(item.Id) })"
+                       target="_blank"
+                       style="text-decoration:none; height:fit-content"
+                       onclick="openFullscreen(event, this.href)">
+                        <img src="@Url.Content(item.Image)"
+                             class="img-fluid mb-2 shadow-sm hover-zoom"
+                             style="width: 100px; height: 100px; object-fit: cover; border-radius: 10px;"
+                             alt="@item.Name" />
+
+                        <p>@item.Name</p>
+                    </a>
+                }
+            </div>
+        }
+        <div class="row mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="fw-bold text-center m-0 flex-grow-1">Bài đăng mới nhất</h3>
+
+                <form class="d-flex align-items-center gap-2" action="@Url.Action("LiByCate", "Listing")" method="get">
+                    <input type="hidden" name="slug" value="@Request["slug"]" />
+                    <input type="hidden" name="encryptedId" value="@Request["encryptedId"]" />
+                    <select class="form-select" name="sort" style="min-width: 160px; max-width: 200px;">
+                        <option value="newest" @(Request["sort"] == "newest" ? "selected" : "")>Thời gian đăng: Mới</option>
+                        <option value="oldest" @(Request["sort"] == "oldest" ? "selected" : "")>Thời gian đăng: Lâu</option>
+                        <option value="asc" @(Request["sort"] == "asc" ? "selected" : "")>Giá: Thấp -> Cao</option>
+                        <option value="desc" @(Request["sort"] == "desc" ? "selected" : "")>Giá: Cao -> Thấp</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary">Lọc</button>
+                </form>
+            </div>
+        </div>
+
+        <br />
+        <div class="row">
+            <div class="row" id="listingContainer">
+                @Html.Partial("_ListingPartial", Model)
+            </div>
+            @if (ViewBag.TotalCount > ViewBag.PageSize)
+            {
+                <div class="text-center mt-4">
+                    <button id="loadMoreBtn" class="btn btn-outline-primary"
+                            data-page="1"
+                            data-pageSize="@ViewBag.PageSize"
+                            data-total="@ViewBag.TotalCount"
+                            data-slug="@Request["slug"]"
+                            data-encryptedid="@Request["encryptedId"]"
+                            data-sort="@Request["sort"] ?? " newest"">
+                        Tải thêm
+                    </button>
+                </div>
+            }
+
+        </div>
+    }
+    else
+    {
+        <h3 class="fw-bold mb-4 text-center">Chưa có bài đăng theo danh mục này</h3>
+    }
+</main>

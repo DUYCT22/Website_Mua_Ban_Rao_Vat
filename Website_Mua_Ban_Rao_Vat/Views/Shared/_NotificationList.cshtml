@@ -1,0 +1,19 @@
+﻿@model List<Website_Mua_Ban_Rao_Vat.Models.Notification>
+
+<ul class="list-group list-group-flush">
+    @if (Model != null && Model.Any())
+    {
+        foreach (var item in Model)
+        {
+            <li class="list-group-item">
+
+                <div class="fw-bold">@(item.CreatedAt?.ToString("dd/MM/yyyy HH:mm"))</div>
+                <div>@item.Message</div>
+            </li>
+        }
+    }
+    else
+    {
+        <li class="list-group-item text-muted">Không có thông báo nào.</li>
+    }
+</ul>

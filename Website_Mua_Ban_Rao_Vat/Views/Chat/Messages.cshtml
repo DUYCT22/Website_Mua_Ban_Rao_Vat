@@ -1,0 +1,511 @@
+﻿@{
+    Layout = null;
+}
+@functions {
+    public string ToSlug(string str)
+    {
+        return str.ToLower()
+                  .Replace(" ", "-")
+                  .Replace("/", "")
+                  .Replace("(", "")
+                  .Replace(")", "")
+                  .Replace("+", "")
+                  .Replace(".", "")
+                  .Replace(",", "")
+                  .Replace("?", "")
+                  .Replace("!", "")
+                  .Replace(":", "")
+                  .Replace(";", "")
+                  .Replace("đ", "d")
+                  .Normalize(System.Text.NormalizationForm.FormD)
+                  .Where(c => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
+                  .Aggregate("", (s, c) => s + c)
+                  .Replace("--", "-");
+    }
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewBag.Title</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .chat-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            height: 100vh;
+        }
+
+        .user-list {
+            background-color: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            overflow-y: auto;
+        }
+
+        .user-item {
+            cursor: pointer;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #dee2e6;
+            transition: background-color 0.2s ease;
+        }
+
+            .user-item:hover {
+                background-color: #e9ecef;
+            }
+
+            .user-item.active-user {
+                font-weight: bold;
+                background-color: #dbeafe;
+            }
+
+        .chat-area {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .chat-header {
+            background-color: #0d6efd;
+            color: white;
+            padding: 1rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            background-color: #f1f3f5;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            max-width: 70%;
+            margin-bottom: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+        }
+
+            .message.self {
+                margin-left: auto;
+                background-color: #0d6efd;
+                color: white;
+            }
+
+            .message.other {
+                margin-right: auto;
+                background-color: #e9ecef;
+                color: #212529;
+            }
+
+        .input-area {
+            padding: 0.75rem;
+            border-top: 1px solid #dee2e6;
+            background-color: white;
+        }
+
+        .typing-indicator {
+            font-style: italic;
+            font-size: 0.9rem;
+            color: #6c757d;
+            padding-left: 0.5rem;
+        }
+
+        .listing-preview {
+            background-color: #fff;
+            border: 1px solid #ced4da;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+            .listing-preview img {
+                width: 60px;
+                height: 60px;
+                object-fit: cover;
+            }
+    </style>
+    <script>
+        function openFullscreen(event, url) {
+            event.preventDefault();
+            const win = window.open(url, '_blank');
+
+            if (win) {
+                win.focus();
+                win.onload = () => {
+                    const docElm = win.document.documentElement;
+                    if (docElm.requestFullscreen) {
+                        docElm.requestFullscreen().catch(err => {
+                            console.error("Error attempting to enable full-screen mode:", err);
+                        });
+                    } else if (docElm.mozRequestFullScreen) {
+                        docElm.mozRequestFullScreen();
+                    } else if (docElm.webkitRequestFullscreen) {
+                        docElm.webkitRequestFullscreen();
+                    } else if (docElm.msRequestFullscreen) {
+                        docElm.msRequestFullscreen();
+                    }
+                };
+            } else {
+                alert("Trình duyệt đã chặn popup. Vui lòng cho phép để xem ở chế độ toàn màn hình.");
+            }
+        }
+
+        let selectedUserId = null;
+
+        function selectUser(userId, username) {
+            selectedUserId = userId;
+            $('.user-item').removeClass('active-user');
+            $(`.user-item[data-user-id='${userId}']`).addClass('active-user');
+            $('#chatHeader').text(username);
+            $('#chatMessages').html('<span class="text-muted">Đang tải tin nhắn...</span>');
+            $('#messageInput').prop('disabled', false);
+            $('#sendButton').prop('disabled', false);
+            loadChatHistory();
+            if (firebaseReady && db) {
+                listenTypingStatus();
+                listenToChatMessages();
+            } else {
+                console.warn("Firebase chưa sẵn sàng, không thể lắng nghe trạng thái nhập.");
+            }
+        }
+
+        function loadChatHistory() {
+            if (selectedUserId == null) {
+                $('#chatMessages').html('<div class="text-danger">Vui lòng chọn người để trò chuyện.</div>');
+                return;
+            }
+
+            $.get(`/Chat/GetChatHistory?userId=${selectedUserId}`, function (data) {
+                if (data.success) {
+                    renderChatMessages(data.data);
+                } else {
+                    $('#chatMessages').html('<div class="text-danger">Lỗi tải tin nhắn.</div>');
+                }
+            });
+        }
+
+        function listenToChatMessages() {
+            if (!selectedUserId || !CURRENT_USER_ID) return;
+
+            const chatKey = CURRENT_USER_ID < selectedUserId
+                ? `${CURRENT_USER_ID}_${selectedUserId}`
+                : `${selectedUserId}_${CURRENT_USER_ID}`;
+            db.ref(`messages/${chatKey}`).off();
+            db.ref(`messages/${chatKey}`).on('child_added', snapshot => {
+                const msg = snapshot.val();
+                if (msg && msg.SentAt && !isMessageAlreadyDisplayed(msg)) {
+                    renderChatMessages([msg], true);
+                }
+            });
+        }
+
+        function isMessageAlreadyDisplayed(msg) {
+            const messages = $('#chatMessages .message');
+            for (let i = 0; i < messages.length; i++) {
+                const displayedMsg = messages[i];
+                if ($(displayedMsg).text().trim() === msg.Content.trim()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function renderChatMessages(messages, append = false) {
+            const chatMessages = $('#chatMessages');
+            if (!append) {
+                chatMessages.html('');
+            }
+
+            messages.forEach((msg) => {
+                if (!msg || !msg.Content || !msg.SenderId) return;
+
+                const isSelf = msg.SenderId === CURRENT_USER_ID;
+                const sender = isSelf ? 'Bạn' : msg.SenderFullName || "Người dùng";
+                const time = formatTime(msg.SentAt);
+                const messageClass = isSelf ? 'self' : 'other';
+
+                const msgDiv = $(`
+                    <div class="message p-2 rounded ${messageClass}">
+                        <div class="d-flex justify-content-between">
+                            <strong>${sender}</strong>
+                            <small class="text-muted">${time}</small>
+                        </div>
+                         <div>${msg.Content}</div>
+                    </div>`);
+                const existingMessage = chatMessages.find(`.message:contains('${msg.Content}')`);
+                if (existingMessage.length > 0) return;
+
+                if (msg.ListingId && msg.ListingTitle && msg.ListingImage) {
+                    const slug = msg.ListingTitle.toLowerCase()
+                        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                        .replace(/đ/g, "d").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+                    const listingUrl = `/bai-dang/${slug}-${msg.EncryptedId}`;
+                    const imagePath = msg.ListingImage || '/Contents/image/no_image.png';
+
+                    const listingPreview = $(`
+            <div class="mt-2 p-2 border rounded bg-light">
+                <a href="${listingUrl}" target="_blank" onclick="openFullscreen(event, this.href)">
+                    <div class="d-flex align-items-center">
+                        <img src="${imagePath}" class="me-2" width="60" height="60" />
+                        <div class="text-dark">${msg.ListingTitle}</div>
+                    </div>
+                </a>
+            </div>
+        `);
+                    msgDiv.append(listingPreview);
+                }
+
+                chatMessages.append(msgDiv);
+            });
+
+            chatMessages.scrollTop(chatMessages[0].scrollHeight);
+        }
+
+        function listenToAllChats() {
+            if (!CURRENT_USER_ID || !firebaseReady || !db) return;
+            db.ref('messages').once('value', snapshot => {
+                const allChats = snapshot.val();
+                if (!allChats) return;
+
+                Object.keys(allChats).forEach(chatKey => {
+                    if (chatKey.includes(CURRENT_USER_ID)) {
+                        db.ref(`messages/${chatKey}`).limitToLast(1).on('child_added', snap => {
+                            const msg = snap.val();
+
+                            const partnerId = chatKey.replace(`${CURRENT_USER_ID}_`, '')
+                                .replace(`_${CURRENT_USER_ID}`, '');
+                            if (parseInt(partnerId) === selectedUserId) {
+                                renderChatMessages([msg], true);
+                            } else if (msg.SenderId !== CURRENT_USER_ID) {
+                                notifyNewMessage(partnerId, msg);
+                            }
+
+                        });
+                    }
+                });
+            });
+        }
+
+        function notifyNewMessage(userId, msg) {
+            const userItem = $(`.user-item:contains('${msg.SenderFullName}')`);
+            if (userItem.length > 0) {
+                userItem.append('<span class="badge bg-danger ms-2">Mới</span>');
+            }
+        }
+
+        function formatTime(sentAt) {
+            let date;
+            if (typeof sentAt === "string" && sentAt.startsWith("/Date(")) {
+                const timestamp = parseInt(sentAt.match(/\d+/)[0]);
+                date = new Date(timestamp);
+            }
+            else if (typeof sentAt === "string" && sentAt.includes(" ")) {
+                const isoStr = sentAt.replace(" ", "T");
+                date = new Date(isoStr);
+            }
+            else {
+                date = new Date(sentAt);
+            }
+
+            if (isNaN(date.getTime())) {
+                return "Thời gian không hợp lệ";
+            }
+
+            const now = new Date();
+
+            const isSameDate =
+                date.getDate() === now.getDate() &&
+                date.getMonth() === now.getMonth() &&
+                date.getFullYear() === now.getFullYear();
+
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+
+            if (isSameDate) {
+                return `${hours}:${minutes}`;
+            } else {
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}/${month}/${year} ${hours}:${minutes}`;
+            }
+        }
+
+        function sendMessage() {
+            const content = $('#messageInput').val().trim();
+            if (content === '') return;
+
+            $.post('/Chat/SendMessage', { receiverId: selectedUserId, content: content }, function (data) {
+                if (data.success) {
+                    $('#messageInput').val('');
+                } else {
+                    alert(data.message || 'Có lỗi xảy ra khi gửi.');
+                }
+            });
+        }
+        let db = null;
+        let firebaseReady = false;
+        let CURRENT_USER_ID = parseInt('@HttpUtility.HtmlEncode(Session["userId"]?.ToString() ?? "0")');
+
+        $(document).ready(function () {
+            const firebaseConfig = {
+                apiKey: "AIzaSyDTU9wp9YgQb1W0QfgwoQGRHEaA99VUlYU",
+                authDomain: "muabanraovat-63362.firebaseapp.com",
+                databaseURL: "https://muabanraovat-63362-default-rtdb.firebaseio.com",
+                projectId: "muabanraovat-63362",
+                storageBucket: "muabanraovat-63362.appspot.com",
+                messagingSenderId: "282688165601",
+                appId: "1:282688165601:web:8212ea0ec804e4f72b89a0",
+                measurementId: "G-H35P70JGDM"
+            };
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+            firebaseReady = true;
+            $('#sendButton').click(sendMessage);
+
+            $('#messageInput').keypress(function (e) {
+                if (e.which === 13 && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            $('#quickMessages').on('click', 'button', function () {
+                const quickText = $(this).text();
+                $('#messageInput').val(quickText);
+                $('#messageInput').focus();
+            });
+            const firstUser = $('.user-item').first();
+            if (firstUser.length > 0) {
+                firstUser.click();
+            }
+            listenToChatMessages();
+
+            listenToAllChats();
+            $('#messageInput').on('input', function () {
+                if (!selectedUserId) return;
+
+                db.ref(`typingStatus/${CURRENT_USER_ID}_to_${selectedUserId}`).set({
+                    isTyping: true
+                });
+
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(() => {
+                    db.ref(`typingStatus/${CURRENT_USER_ID}_to_${selectedUserId}`).set({
+                        isTyping: false
+                    });
+                }, 1000);
+            });
+            listenToAllChats();
+        });
+
+        let typingTimeout;
+
+        function listenTypingStatus() {
+            const typingRef = db.ref(`typingStatus/${selectedUserId}_to_${CURRENT_USER_ID}`);
+            typingRef.off();
+            typingRef.on('value', snapshot => {
+                const data = snapshot.val();
+                if (data && data.isTyping) {
+                    showTypingIndicator();
+                } else {
+                    hideTypingIndicator();
+                }
+            });
+        }
+
+        function showTypingIndicator() {
+    if ($('#typingIndicator').length === 0) {
+        $('#chatMessages').append(`
+            <div id="typingIndicator" class="typing-indicator">
+                Đang nhập tin<span>.</span><span>.</span><span>.</span>
+            </div>
+        `);
+        $('#chatMessages').scrollTop($('#chatMessages')[0].scrollHeight);
+    }
+}
+
+        function hideTypingIndicator() {
+            $('#typingIndicator').remove();
+        }
+
+        function scrollToBottom() {
+            const chat = document.getElementById("chatMessages");
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        document.getElementById("sendButton").addEventListener("click", () => {
+            const msgBox = document.getElementById("messageInput");
+            const text = msgBox.value.trim();
+            if (!text) return;
+
+            const div = document.createElement("div");
+            div.className = "message self";
+            div.textContent = text;
+            document.getElementById("chatMessages").appendChild(div);
+            msgBox.value = "";
+            scrollToBottom();
+        });
+
+    </script>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="user-list p-3">
+            <h5 class="text-center mb-3">Danh sách trò chuyện</h5>
+            <ul class="list-group">
+                @if (ViewBag.ChatUsers != null && ((List<Website_Mua_Ban_Rao_Vat.Models.User>)ViewBag.ChatUsers).Any())
+                {
+                    foreach (var user in (List<Website_Mua_Ban_Rao_Vat.Models.User>)ViewBag.ChatUsers)
+                    {
+                        <li class="list-group-item user-item" onclick="selectUser(@user.Id, '@Html.Raw(HttpUtility.JavaScriptStringEncode(user.FullName))')">
+                            <div class="d-flex align-items-center">
+                                <img src="@Url.Content(user.Avatar)" onerror="this.src='~/Contents/image/user/user.png'" class="rounded-circle me-2" width="40" height="40" />
+                                <div>
+                                    <div class="fw-bold">@user.FullName</div>
+                                    <small class="text-muted">Nhấn để xem tin nhắn</small>
+                                </div>
+                            </div>
+                        </li>
+                    }
+                }
+                else
+                {
+                    <li class="list-group-item text-center">Không có cuộc trò chuyện nào</li>
+                }
+            </ul>
+        </div>
+        <div class="chat-area">
+            <div id="chatHeader" class="chat-header">Vui lòng chọn người nhắn</div>
+            <div id="chatMessages" class="chat-messages">
+                <span class="text-muted">Chưa có cuộc trò chuyện</span>
+            </div>
+            <div class="input-area">
+                <div class="input-group mb-2">
+                    <input type="text" id="messageInput" class="form-control" placeholder="Nhập tin nhắn..." disabled>
+                    <button id="sendButton" class="btn btn-primary" type="button" disabled>Gửi</button>
+                </div>
+                <div id="quickMessages" class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm">Chào bạn!</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm">Bài đăng còn không bạn!</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm">Cảm ơn bạn!</button>
+                </div>
+            </div>
+            <small id="typingStatus" class="text-muted d-block mt-1"></small>
+        </div>
+    </div>
+</body>
+</html>
